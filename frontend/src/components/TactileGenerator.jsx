@@ -1,7 +1,13 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { Sliders, Dices, Copy, Check, Shield, BookOpen, Key, Clock, XCircle, AlertTriangle, Settings2, Sparkles } from 'lucide-react';
 import { useClipboardTimer } from '../hooks/useClipboardTimer';
-import { generatePolicyPassword, generatePronounceablePassword } from '../utils/policyGenerator';
+import {
+  generatePolicyPassword,
+  generatePronounceablePassword,
+  generateRandomPassword,
+  generateDicewarePassword
+} from '../utils/policyGenerator';
+import { playTactileSound } from '../utils/tactileAudio';
 
 const isDicewareEnabled = import.meta.env.VITE_FEATURE_DICEWARE === 'true';
 const isCopyBufferEnabled = import.meta.env.VITE_FEATURE_COPY_BUFFER === 'true';
@@ -61,30 +67,58 @@ export default function TactileGenerator({ onGenerateToAnalyzer }) {
         setEntropyBits(pronRes.entropyBits);
         setIsLowEntropyWarning(pronRes.isLowEntropy);
       } else if (genMode === 'diceware' && isDicewareEnabled) {
-        const query = new URLSearchParams({
-          mode: 'diceware',
-          word_count: wordCount.toString(),
-          separator: separator
-        });
-        const res = await fetch(`/api/generate?${query.toString()}`);
-        if (res.ok) {
-          const data = await res.json();
-          setGeneratedPassword(data.password);
-          setEntropyBits(data.entropy_bits);
+        let success = false;
+        try {
+          const query = new URLSearchParams({
+            mode: 'diceware',
+            word_count: wordCount.toString(),
+            separator: separator
+          });
+          const res = await fetch(`/api/generate?${query.toString()}`);
+          if (res.ok) {
+            const data = await res.json();
+            setGeneratedPassword(data.password);
+            setEntropyBits(data.entropy_bits);
+            success = true;
+          }
+        } catch {
+          // static build fallback
+        }
+        if (!success) {
+          const diceRes = generateDicewarePassword({ wordCount, separator });
+          setGeneratedPassword(diceRes.password);
+          setEntropyBits(diceRes.entropyBits);
         }
       } else {
-        const query = new URLSearchParams({
-          mode: 'random',
-          length: length.toString(),
-          symbols: includeSymbols.toString(),
-          numbers: includeNumbers.toString(),
-          exclude_ambiguous: excludeAmbiguous.toString()
-        });
-        const res = await fetch(`/api/generate?${query.toString()}`);
-        if (res.ok) {
-          const data = await res.json();
-          setGeneratedPassword(data.password);
-          setEntropyBits(data.entropy_bits);
+        let success = false;
+        try {
+          const query = new URLSearchParams({
+            mode: 'random',
+            length: length.toString(),
+            symbols: includeSymbols.toString(),
+            numbers: includeNumbers.toString(),
+            exclude_ambiguous: excludeAmbiguous.toString()
+          });
+          const res = await fetch(`/api/generate?${query.toString()}`);
+          if (res.ok) {
+            const data = await res.json();
+            setGeneratedPassword(data.password);
+            setEntropyBits(data.entropy_bits);
+            success = true;
+          }
+        } catch {
+          // static build fallback
+        }
+        if (!success) {
+          const randRes = generateRandomPassword({
+            length,
+            includeSymbols,
+            includeNumbers,
+            excludeAmbiguous
+          });
+          setGeneratedPassword(randRes.password);
+          setEntropyBits(randRes.entropyBits);
+          setIsLowEntropyWarning(randRes.isLowEntropy);
         }
       }
     } catch (err) {
@@ -104,7 +138,18 @@ export default function TactileGenerator({ onGenerateToAnalyzer }) {
     fetchGeneratedPassword();
   }, [fetchGeneratedPassword]);
 
+  const handleModeChange = (mode) => {
+    playTactileSound('click');
+    setGenMode(mode);
+  };
+
+  const handleGenerateClick = () => {
+    playTactileSound('generate');
+    fetchGeneratedPassword();
+  };
+
   const handleCopy = () => {
+    playTactileSound('copy');
     if (!generatedPassword) return;
     if (isCopyBufferEnabled) {
       copyToClipboard(generatedPassword, 30);
@@ -114,10 +159,12 @@ export default function TactileGenerator({ onGenerateToAnalyzer }) {
   };
 
   const handleApplyToAnalyzer = () => {
+    playTactileSound('click');
     if (generatedPassword && onGenerateToAnalyzer) {
       onGenerateToAnalyzer(generatedPassword);
     }
   };
+
 
   return (
     <div className="industrial-panel p-5 md:p-6 rounded-xl flex flex-col gap-5 h-full">
@@ -136,7 +183,7 @@ export default function TactileGenerator({ onGenerateToAnalyzer }) {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 bg-[#050505] p-1.5 rounded-lg border border-[#2d382c] font-mono text-xs">
         <button
           type="button"
-          onClick={() => setGenMode('random')}
+          onClick={() => handleModeChange('random')}
           className={`py-2 px-2 rounded flex items-center justify-center gap-1.5 transition-all text-[11px] ${
             genMode === 'random'
               ? 'bg-[#00ff66]/20 text-[#00ff66] border border-[#00ff66]/40 font-bold'
@@ -150,7 +197,7 @@ export default function TactileGenerator({ onGenerateToAnalyzer }) {
         {isDicewareEnabled && (
           <button
             type="button"
-            onClick={() => setGenMode('diceware')}
+            onClick={() => handleModeChange('diceware')}
             className={`py-2 px-2 rounded flex items-center justify-center gap-1.5 transition-all text-[11px] ${
               genMode === 'diceware'
                 ? 'bg-[#00ff66]/20 text-[#00ff66] border border-[#00ff66]/40 font-bold'
@@ -164,7 +211,7 @@ export default function TactileGenerator({ onGenerateToAnalyzer }) {
 
         <button
           type="button"
-          onClick={() => setGenMode('policy')}
+          onClick={() => handleModeChange('policy')}
           className={`py-2 px-2 rounded flex items-center justify-center gap-1.5 transition-all text-[11px] ${
             genMode === 'policy'
               ? 'bg-[#00ff66]/20 text-[#00ff66] border border-[#00ff66]/40 font-bold'
@@ -177,7 +224,7 @@ export default function TactileGenerator({ onGenerateToAnalyzer }) {
 
         <button
           type="button"
-          onClick={() => setGenMode('pronounceable')}
+          onClick={() => handleModeChange('pronounceable')}
           className={`py-2 px-2 rounded flex items-center justify-center gap-1.5 transition-all text-[11px] ${
             genMode === 'pronounceable'
               ? 'bg-[#00ff66]/20 text-[#00ff66] border border-[#00ff66]/40 font-bold'
@@ -211,7 +258,7 @@ export default function TactileGenerator({ onGenerateToAnalyzer }) {
               {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
             </button>
             <button
-              onClick={fetchGeneratedPassword}
+              onClick={handleGenerateClick}
               disabled={isGenerating}
               className="p-2.5 rounded-lg bg-[#00ff66]/20 hover:bg-[#00ff66]/30 border border-[#00ff66]/40 text-[#00ff66] transition-all"
               title="Generate new password"

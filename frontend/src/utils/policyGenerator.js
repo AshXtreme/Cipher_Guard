@@ -164,3 +164,85 @@ export function generatePronounceablePassword(options = {}) {
     poolSize
   };
 }
+
+const DICEWARE_WORD_LIST = [
+  'abacus', 'amber', 'anchor', 'beacon', 'breeze', 'bridge', 'cactus', 'canvas',
+  'castle', 'cipher', 'cobalt', 'copper', 'cosmic', 'crystal', 'delta', 'dragon',
+  'echo', 'emerald', 'falcon', 'feather', 'forest', 'galaxy', 'glacier', 'granite',
+  'harbor', 'horizon', 'island', 'jasper', 'jungle', 'kestrel', 'knight', 'lantern',
+  'legend', 'matrix', 'meadow', 'meteor', 'mirage', 'nebula', 'nexus', 'oasis',
+  'obsidian', 'ocean', 'orchid', 'orbit', 'panther', 'phantom', 'phoenix', 'planet',
+  'prism', 'quantum', 'quartz', 'radar', 'radiance', 'shadow', 'shield', 'signal',
+  'silver', 'solar', 'spectrum', 'sphere', 'spirit', 'summit', 'thunder', 'timber',
+  'titanium', 'topaz', 'torrent', 'trident', 'tundra', 'vector', 'velocity', 'velvet',
+  'vortex', 'whisper', 'zenith', 'zephyr'
+];
+
+/**
+ * Generates a random password using CSPRNG client-side.
+ */
+export function generateRandomPassword(options = {}) {
+  const {
+    length = 16,
+    includeSymbols = true,
+    includeNumbers = true,
+    excludeAmbiguous = true
+  } = options;
+
+  let lower = LOWER_CHARS;
+  let upper = UPPER_CHARS;
+  let numbers = DIGIT_CHARS;
+  let symbols = SYMBOL_CHARS;
+
+  if (excludeAmbiguous) {
+    const amb = new Set(['l', '1', 'I', 'o', '0', 'O', 'B', '8', '|', '`', "'", '"']);
+    lower = lower.split('').filter(c => !amb.has(c)).join('');
+    upper = upper.split('').filter(c => !amb.has(c)).join('');
+    numbers = numbers.split('').filter(c => !amb.has(c)).join('');
+    symbols = symbols.split('').filter(c => !amb.has(c)).join('');
+  }
+
+  let pool = lower + upper;
+  if (includeNumbers) pool += numbers;
+  if (includeSymbols) pool += symbols;
+
+  if (!pool) pool = LOWER_CHARS;
+
+  const chars = [];
+  for (let i = 0; i < length; i++) {
+    chars.push(pool[getCsprngRandomInt(pool.length)]);
+  }
+
+  const password = chars.join('');
+  const poolSize = new Set(pool.split('')).size || 26;
+  const entropyBits = Math.round(length * Math.log2(poolSize) * 100) / 100;
+
+  return {
+    password,
+    entropyBits,
+    isLowEntropy: entropyBits < 40,
+    poolSize
+  };
+}
+
+/**
+ * Generates a Diceware passphrase using CSPRNG client-side.
+ */
+export function generateDicewarePassword(options = {}) {
+  const { wordCount = 6, separator = '-' } = options;
+  const words = [];
+  for (let i = 0; i < wordCount; i++) {
+    const idx = getCsprngRandomInt(DICEWARE_WORD_LIST.length);
+    words.push(DICEWARE_WORD_LIST[idx]);
+  }
+  const password = words.join(separator);
+  const entropyBits = Math.round(wordCount * Math.log2(DICEWARE_WORD_LIST.length) * 100) / 100;
+
+  return {
+    password,
+    entropyBits,
+    isLowEntropy: false,
+    poolSize: DICEWARE_WORD_LIST.length
+  };
+}
+
