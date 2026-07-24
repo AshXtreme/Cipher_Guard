@@ -13,7 +13,7 @@ export default function Header() {
           <div className="font-bold text-lg tracking-tight text-[#00ff66] text-glow flex items-center gap-2">
             CIPHER_GUARD
             <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#00ff66]/20 text-[#00ff66] border border-[#00ff66]/30">
-              PROD-v1.0
+              PROD-v1.2
             </span>
           </div>
           <p className="text-[11px] text-[#849581] font-mono tracking-wider hidden sm:block">
