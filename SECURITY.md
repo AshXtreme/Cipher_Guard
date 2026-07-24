@@ -91,10 +91,21 @@ This document describes the threat model, data-handling guarantees, and security
 | Non-root container user | Yes | `Dockerfile` (`USER cipherguard`) | Dockerfile step |
 | No secrets committed to git | Yes | `.env.example` placeholder | Repository check |
 | Generic error messages in prod | Yes | `backend/app.py` (`global_exception_handler`)| `backend/app.py` |
+| In-Memory Comparison Candidate Storage | Yes | `frontend/src/components/ComparisonTray.jsx` | `frontend/src/tests/ComparisonTray.test.jsx` (asserts zero `localStorage`/`sessionStorage` calls) |
+| Auto-Expiring Copy Buffer | Yes | `frontend/src/hooks/useClipboardTimer.js` | `frontend/src/tests/useClipboardTimer.test.jsx` |
+| Local EFF Diceware Wordlist Bundling | Yes | `data/eff_large_wordlist.txt` | `tests/test_generator.py` |
 
 ---
 
-## 6. Reporting a Vulnerability
+## 6. v1.2 Addendum & Data Classification Guarantees
+
+- **Password Health Comparison Tool**: Comparison candidate state lives strictly in in-memory React state (`frontend/src/components/ComparisonTray.jsx`). Candidate passwords are **never** written to `localStorage` or `sessionStorage`. All comparison state is automatically cleared on page refresh, navigation, or tab closure.
+- **Auto-Expiring Copy Buffer**: Provides best-effort auto-clearing (`navigator.clipboard.writeText('')`) after 30 seconds. The feature includes a prominent user disclaimer stating browser permission limitations.
+- **Bundled Diceware Wordlist**: EFF Large Wordlist is bundled locally at `data/eff_large_wordlist.txt` to eliminate runtime third-party dependencies and supply-chain tampering risks.
+
+---
+
+## 7. Reporting a Vulnerability
 
 If you discover a security vulnerability in CipherGuard:
 

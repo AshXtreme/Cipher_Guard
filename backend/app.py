@@ -116,7 +116,10 @@ class BreachCheckResponse(BaseModel):
 
 class GenerateResponse(BaseModel):
     password: str
-    length: int
+    mode: Optional[str] = "random"
+    length: Optional[int] = None
+    word_count: Optional[int] = None
+    separator: Optional[str] = None
     entropy_bits: float
 
 class HealthResponse(BaseModel):
@@ -167,18 +170,25 @@ async def breach_check_endpoint(
 @limiter.limit("60/minute")
 async def generate_endpoint(
     request: Request,
-    length: int = Query(16, ge=8, le=128, description="Length of generated password"),
-    symbols: bool = Query(True, description="Include special symbols"),
-    numbers: bool = Query(True, description="Include numbers"),
-    exclude_ambiguous: bool = Query(True, description="Exclude ambiguous characters (0, O, o, 1, l, I)")
+    mode: str = Query("random", description="Generation mode: 'random' or 'diceware'"),
+    length: int = Query(16, ge=8, le=128, description="Length of generated password (random mode)"),
+    symbols: bool = Query(True, description="Include special symbols (random mode)"),
+    numbers: bool = Query(True, description="Include numbers (random mode)"),
+    exclude_ambiguous: bool = Query(True, description="Exclude ambiguous characters (random mode)"),
+    word_count: int = Query(6, ge=3, le=20, description="Word count (diceware mode)"),
+    separator: str = Query("-", description="Word separator (diceware mode)")
 ):
     """
-    Returns a cryptographically secure random password generated using Python's secrets module.
+    Returns a cryptographically secure random password or Diceware passphrase.
+    Omitting 'mode' maintains 100% backward compatibility with v1.0/v1.1 callers.
     """
     result = generate_secure_password(
+        mode=mode,
         length=length,
         include_symbols=symbols,
         include_numbers=numbers,
-        exclude_ambiguous=exclude_ambiguous
+        exclude_ambiguous=exclude_ambiguous,
+        word_count=word_count,
+        separator=separator
     )
     return result

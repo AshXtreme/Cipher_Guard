@@ -5,6 +5,7 @@ import LiveAnalyzerConsole from './components/LiveAnalyzerConsole';
 import HeuristicsBreakdown from './components/HeuristicsBreakdown';
 import TactileGenerator from './components/TactileGenerator';
 import TelemetryLog from './components/TelemetryLog';
+import ComparisonTray from './components/ComparisonTray';
 
 // Helper function to compute SHA-1 hash prefix and suffix in browser
 async function computeSha1(text) {
@@ -137,11 +138,14 @@ export default function App() {
             <TelemetryLog logs={logs} />
           </div>
         </div>
+
+        {/* Pane 5: Password Health Comparison Tool (MOD-05) */}
+        <ComparisonTray currentAnalyzerPassword={password} />
       </main>
 
       {/* Footer Bar */}
       <footer className="border-t border-[#2d382c] bg-[#0c0d12]/90 backdrop-blur-md py-3 px-6 text-center text-xs text-[#849581] font-mono z-10">
-        CipherGuard v1.0 — Production Password Strength Analyzer &amp; k-Anonymity HIBP Proxy
+        CipherGuard v1.2 — Password Security Analyzer, Generator &amp; Health Comparison Matrix
       </footer>
     </div>
   );
