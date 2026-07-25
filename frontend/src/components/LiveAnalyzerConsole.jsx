@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { Eye, EyeOff, Lock, Terminal, ShieldAlert, CheckCircle2, AlertTriangle, RefreshCw } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { Eye, EyeOff, Lock, Terminal, ShieldAlert, CheckCircle2, AlertTriangle, RefreshCw, Zap } from 'lucide-react';
+import { checkBloomFilter } from '../utils/bloomFilter';
 
 export default function LiveAnalyzerConsole({
   password,
@@ -12,6 +13,11 @@ export default function LiveAnalyzerConsole({
 
   const score = analysis?.score ?? 0;
   const label = analysis?.label ?? "Awaiting Input";
+
+  // Instant zero-network client-side Bloom Filter check
+  const isBloomFilterMatch = useMemo(() => {
+    return checkBloomFilter(password);
+  }, [password]);
 
   // Segment colors based on score
   const getSegmentClass = (index) => {
@@ -70,6 +76,16 @@ export default function LiveAnalyzerConsole({
           </button>
         </div>
       </div>
+
+      {/* Instant Bloom Filter Pre-Check Warning Badge */}
+      {password && isBloomFilterMatch && (
+        <div className="flex items-center gap-2 p-3 rounded-lg bg-red-950/80 border border-red-800 text-xs font-mono text-red-300 font-semibold shadow-md animate-pulse">
+          <Zap className="w-4 h-4 text-red-400 shrink-0" />
+          <span>
+            <strong>Instant Pre-Check:</strong> Critically weak — matches a top-100k common password (0-network client check).
+          </span>
+        </div>
+      )}
 
       {/* Main Score Display & LED Meter */}
       <div className="bg-[#050505] border border-[#2d382c] p-6 rounded-lg relative flex flex-col gap-5">

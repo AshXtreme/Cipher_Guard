@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Header from './components/Header';
 import BackgroundCanvas from './components/BackgroundCanvas';
 import LiveAnalyzerConsole from './components/LiveAnalyzerConsole';
@@ -6,6 +6,7 @@ import HeuristicsBreakdown from './components/HeuristicsBreakdown';
 import TactileGenerator from './components/TactileGenerator';
 import TelemetryLog from './components/TelemetryLog';
 import ComparisonTray from './components/ComparisonTray';
+import CrackTimeSimulator from './components/CrackTimeSimulator';
 
 // Helper function to compute SHA-1 hash prefix and suffix in browser
 async function computeSha1(text) {
@@ -27,6 +28,18 @@ export default function App() {
   const [breachInfo, setBreachInfo] = useState(null);
   const [logs, setLogs] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Compute active bit entropy for CrackTimeSimulator
+  const currentEntropy = useMemo(() => {
+    if (!password) return 0;
+    let hasLower = /[a-z]/.test(password);
+    let hasUpper = /[A-Z]/.test(password);
+    let hasDigit = /[0-9]/.test(password);
+    let hasSymbol = /[^a-zA-Z0-9]/.test(password);
+    let poolSize = (hasLower ? 26 : 0) + (hasUpper ? 26 : 0) + (hasDigit ? 10 : 0) + (hasSymbol ? 32 : 0);
+    if (poolSize === 0) poolSize = 26;
+    return Math.round(password.length * Math.log2(poolSize) * 100) / 100;
+  }, [password]);
 
   const appendLog = (msg) => {
     setLogs(prev => [...prev.slice(-30), `[${new Date().toLocaleTimeString()}] ${msg}`]);
@@ -139,13 +152,16 @@ export default function App() {
           </div>
         </div>
 
+        {/* Pane 6: Time-to-Crack Offline Simulator (MOD-06) */}
+        <CrackTimeSimulator entropyBits={currentEntropy} />
+
         {/* Pane 5: Password Health Comparison Tool (MOD-05) */}
         <ComparisonTray currentAnalyzerPassword={password} />
       </main>
 
       {/* Footer Bar */}
       <footer className="border-t border-[#2d382c] bg-[#0c0d12]/90 backdrop-blur-md py-3 px-6 text-center text-xs text-[#849581] font-mono z-10">
-        CipherGuard v1.2 — Password Security Analyzer, Generator &amp; Health Comparison Matrix
+        CipherGuard v1.3 — Password Security Analyzer, Generator &amp; Offline Crack Simulator
       </footer>
     </div>
   );

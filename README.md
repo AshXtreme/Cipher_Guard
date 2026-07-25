@@ -22,6 +22,8 @@ For the full threat model, data-handling guarantees, and how to report a vulnera
 
 - **Live Heuristics Analyzer**: Real-time scoring (0–100) evaluating length, character diversity (`lower`, `upper`, `digit`, `symbol`), 3+ character sequential runs (`abc`, `123`, `aaa`), and top-10k dictionary word matches.
 - **k-Anonymity Breach Check**: Computes SHA-1 hash locally in the browser, forwarding **only the first 5 hex characters** to the HIBP API proxy with `Add-Padding: true` headers.
+- **Local Bloom Filter Pre-Check (v1.3)**: Instant, zero-network, client-side pre-check against SecLists top-100k common passwords using a compact 150KB build-time Bloom filter payload ($p \le 1\%$).
+- **Time-to-Crack Offline Simulator (v1.3)**: Calculates theoretical brute-force time-to-crack estimates ($S = 2^H$) across 4 attack scenario benchmarks (Online Throttled, Online Unthrottled, Offline Slow Hash, Offline Fast Hash) with explicit disclaimer text.
 - **Tactile Password Generator**: Cryptographically secure random selection (`secrets` module) supporting both **Random Characters** and **Diceware Passphrases** (bundled EFF Large list), with configurable length, word count, separator, and exact bit entropy ($H$).
 - **Password Health Comparison Matrix**: Compare up to 3 candidate passwords side-by-side (scores, entropy, breach checks, heuristics) using **strictly in-memory React state** with zero browser storage persistence.
 - **Auto-Expiring Copy Buffer**: Best-effort 30-second countdown after copying a password, after which the app attempts to clear the clipboard (`writeText('')`) with explicit user disclaimer.
@@ -87,6 +89,9 @@ See `.env.example` and `frontend/.env.example` for the full list with placeholde
 
 ## 🔒 Security Guarantees & Privacy Controls
 
+- **Local Bloom Filter Pre-Check**: Loaded into browser memory at app startup. Performs instant client-side checks with **zero network requests** and zero server calls.
+- **Time-to-Crack Simulator Disclaimer**: Rendered directly within the simulator component:
+  > *"Disclaimer: These estimates assume a theoretical brute-force search across the full search space. Real-world attack speed depends on whether the password matches known dictionary words or patterns, and how securely the target service hashes stored credentials."*
 - **Scoped Zero-Knowledge Guarantee**: For **breach checking only**, the plaintext password and the full 40-character SHA-1 hash never leave the browser — only a 5-character hash prefix is sent to the backend, which forwards it to HIBP. This is the k-anonymity model.
 - **Strength analysis is server-side by design**: The `/api/analyze` endpoint *does* receive the plaintext password over HTTPS so scoring can run in Python. It is never logged, cached, or stored — see the redaction guarantee below — but it is not a zero-knowledge operation, unlike the breach check.
 - **In-Memory Comparison Candidate Storage**: The Password Health Comparison Tool keeps candidate state strictly in temporary React memory. Candidate passwords are **never** persisted to `localStorage` or `sessionStorage`. All comparison data is cleared upon page refresh or tab close.
@@ -136,6 +141,6 @@ This README currently documents **local development only**. Deploying CipherGuar
 
 ---
 
-## 📄 License
+## 📄 License & Attribution
 
-Licensed under the [MIT License](./LICENSE).
+Licensed under the [MIT License](./LICENSE). See [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md) for third-party dataset and open-source library attributions.

@@ -94,14 +94,18 @@ This document describes the threat model, data-handling guarantees, and security
 | In-Memory Comparison Candidate Storage | Yes | `frontend/src/components/ComparisonTray.jsx` | `frontend/src/tests/ComparisonTray.test.jsx` (asserts zero `localStorage`/`sessionStorage` calls) |
 | Auto-Expiring Copy Buffer | Yes | `frontend/src/hooks/useClipboardTimer.js` | `frontend/src/tests/useClipboardTimer.test.jsx` |
 | Local EFF Diceware Wordlist Bundling | Yes | `data/eff_large_wordlist.txt` | `tests/test_generator.py` |
+| Local Bloom Filter Pre-Check (0-Network) | Yes | `frontend/src/utils/bloomFilter.js` | `frontend/src/tests/bloomFilter.test.jsx` (asserts 0 network requests) |
+| Time-to-Crack Offline Simulator | Yes | `frontend/src/utils/crackTimeEstimator.js` | `frontend/src/tests/crackTimeEstimator.test.jsx` |
 
 ---
 
-## 6. v1.2 Addendum & Data Classification Guarantees
+## 6. v1.2 & v1.3 Addenda & Data Classification Guarantees
 
-- **Password Health Comparison Tool**: Comparison candidate state lives strictly in in-memory React state (`frontend/src/components/ComparisonTray.jsx`). Candidate passwords are **never** written to `localStorage` or `sessionStorage`. All comparison state is automatically cleared on page refresh, navigation, or tab closure.
-- **Auto-Expiring Copy Buffer**: Provides best-effort auto-clearing (`navigator.clipboard.writeText('')`) after 30 seconds. The feature includes a prominent user disclaimer stating browser permission limitations.
-- **Bundled Diceware Wordlist**: EFF Large Wordlist is bundled locally at `data/eff_large_wordlist.txt` to eliminate runtime third-party dependencies and supply-chain tampering risks.
+- **Local Bloom Filter Pre-Check (v1.3)**: The Bloom filter payload (`frontend/src/assets/bloomFilterData.json`) is a static, build-time asset generated from SecLists top-100k common passwords. It is loaded directly into browser memory at application startup. Queries run 100% client-side with **zero network requests**, zero backend logging, and zero third-party dependencies at runtime.
+- **Time-to-Crack Simulator (v1.3)**: Computes offline brute-force attack estimates ($S = 2^H$) purely in-browser using JavaScript math derived from bit entropy. It makes zero network calls, stores no estimates, and renders a mandatory explicit disclaimer noting brute-force limitations.
+- **Password Health Comparison Tool (v1.2)**: Comparison candidate state lives strictly in in-memory React state (`frontend/src/components/ComparisonTray.jsx`). Candidate passwords are **never** written to `localStorage` or `sessionStorage`. All comparison state is automatically cleared on page refresh, navigation, or tab closure.
+- **Auto-Expiring Copy Buffer (v1.2)**: Provides best-effort auto-clearing (`navigator.clipboard.writeText('')`) after 30 seconds. The feature includes a prominent user disclaimer stating browser permission limitations.
+- **Bundled Diceware Wordlist (v1.2)**: EFF Large Wordlist is bundled locally at `data/eff_large_wordlist.txt` to eliminate runtime third-party dependencies and supply-chain tampering risks.
 
 ---
 
