@@ -61,5 +61,8 @@ CipherGuard is built using open-source software libraries licensed under permiss
 | **HeroUI** | React component system | MIT |
 | **Tailwind CSS** | Utility-first CSS framework | MIT |
 | **Lucide React** | Monospaced industrial icon set | ISC |
+| **js-md5** | MD5 hash computation for KDF Lab | MIT |
+| **bcryptjs** | bcrypt KDF computation for KDF Lab | MIT |
+| **argon2-browser** | Argon2id WASM/JS KDF computation for KDF Lab | ISC / MIT |
 | **Pytest** | Backend automated test suite | MIT |
 | **Vitest** | Frontend automated test suite | MIT |

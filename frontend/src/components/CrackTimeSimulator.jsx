@@ -95,7 +95,7 @@ export default function CrackTimeSimulator({ entropyBits = 0 }) {
       <div className="flex items-start gap-2 p-3 rounded-lg bg-[#050505] border border-[#2d382c] text-[11px] text-[#849581] leading-relaxed">
         <AlertCircle className="w-4 h-4 text-yellow-500 shrink-0 mt-0.5" />
         <span>
-          <strong>Disclaimer:</strong> These estimates assume a theoretical brute-force search across the full search space. Real-world attack speed depends on whether the password matches known dictionary words or patterns, and how securely the target service hashes stored credentials.
+          <strong>Disclaimer:</strong> These estimates assume a theoretical brute-force search across the full search space. Real-world attack speed depends on whether the password matches known dictionary words or patterns and how securely the target service hashes stored credentials.
         </span>
       </div>
     </div>

@@ -7,6 +7,8 @@ import TactileGenerator from './components/TactileGenerator';
 import TelemetryLog from './components/TelemetryLog';
 import ComparisonTray from './components/ComparisonTray';
 import CrackTimeSimulator from './components/CrackTimeSimulator';
+import TypoStressTest from './components/TypoStressTest';
+import KdfLab from './components/KdfLab';
 
 // Helper function to compute SHA-1 hash prefix and suffix in browser
 async function computeSha1(text) {
@@ -155,13 +157,19 @@ export default function App() {
         {/* Pane 6: Time-to-Crack Offline Simulator (MOD-06) */}
         <CrackTimeSimulator entropyBits={currentEntropy} />
 
+        {/* Pane 8: Typo-Squatting / Fat-Finger Stress Test (MOD-08) */}
+        <TypoStressTest password={password} />
+
+        {/* Pane 7: Client-Side Hashing & KDF Lab (MOD-07) */}
+        <KdfLab />
+
         {/* Pane 5: Password Health Comparison Tool (MOD-05) */}
         <ComparisonTray currentAnalyzerPassword={password} />
       </main>
 
       {/* Footer Bar */}
       <footer className="border-t border-[#2d382c] bg-[#0c0d12]/90 backdrop-blur-md py-3 px-6 text-center text-xs text-[#849581] font-mono z-10">
-        CipherGuard v1.3 — Password Security Analyzer, Generator &amp; Offline Crack Simulator
+        CipherGuard v1.4 — Password Security Analyzer, KDF Playground &amp; Typo Stress Test
       </footer>
     </div>
   );

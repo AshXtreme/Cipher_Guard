@@ -96,11 +96,15 @@ This document describes the threat model, data-handling guarantees, and security
 | Local EFF Diceware Wordlist Bundling | Yes | `data/eff_large_wordlist.txt` | `tests/test_generator.py` |
 | Local Bloom Filter Pre-Check (0-Network) | Yes | `frontend/src/utils/bloomFilter.js` | `frontend/src/tests/bloomFilter.test.jsx` (asserts 0 network requests) |
 | Time-to-Crack Offline Simulator | Yes | `frontend/src/utils/crackTimeEstimator.js` | `frontend/src/tests/crackTimeEstimator.test.jsx` |
+| Client-Side Hashing & KDF Lab | Yes | `frontend/src/workers/kdfWorker.js` | `frontend/src/tests/kdfLab.test.jsx` (asserts Web Worker offloading & 0 network calls) |
+| Typo-Squatting Stress Test | Yes | `frontend/src/utils/typoGenerator.js` | `frontend/src/tests/typoGenerator.test.jsx` (asserts 0 network requests) |
 
 ---
 
-## 6. v1.2 & v1.3 Addenda & Data Classification Guarantees
+## 6. v1.2, v1.3 & v1.4 Addenda & Data Classification Guarantees
 
+- **Client-Side Hashing & KDF Lab (v1.4)**: All hashing (MD5, SHA-1, SHA-256, SHA-512) and KDF derivations (PBKDF2, bcrypt, Argon2id) run 100% in-browser. Heavy KDF computations are executed inside a **background Web Worker** (`frontend/src/workers/kdfWorker.js`) to prevent main-thread thread-blocking. Input text is retained in memory only, never sent over any network, and rendered with explicit educational sandbox disclaimers.
+- **Typo-Squatting Stress Test (v1.4)**: Evaluates single-edit distance QWERTY mutations (transpositions, shift slips, neighbor key replacements) 100% in-browser against the v1.3 Local Bloom Filter. Operates with **zero network requests** and zero data persistence.
 - **Local Bloom Filter Pre-Check (v1.3)**: The Bloom filter payload (`frontend/src/assets/bloomFilterData.json`) is a static, build-time asset generated from SecLists top-100k common passwords. It is loaded directly into browser memory at application startup. Queries run 100% client-side with **zero network requests**, zero backend logging, and zero third-party dependencies at runtime.
 - **Time-to-Crack Simulator (v1.3)**: Computes offline brute-force attack estimates ($S = 2^H$) purely in-browser using JavaScript math derived from bit entropy. It makes zero network calls, stores no estimates, and renders a mandatory explicit disclaimer noting brute-force limitations.
 - **Password Health Comparison Tool (v1.2)**: Comparison candidate state lives strictly in in-memory React state (`frontend/src/components/ComparisonTray.jsx`). Candidate passwords are **never** written to `localStorage` or `sessionStorage`. All comparison state is automatically cleared on page refresh, navigation, or tab closure.
