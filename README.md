@@ -20,6 +20,8 @@ For the full threat model, data-handling guarantees, and how to report a vulnera
 └─────────────────┘                            └──────────────────┘                     └──────────────────────┘
 ```
 
+- **Visual Password Entropy Heatmap (v1.5)**: Color-coded real-time character breakdown (🟢 Symbols ❖, 🔵 Letters Aa, 🟡 Numbers 12, 🔴 Weak Runs ⚠️). Features a **shoulder-surfing privacy design**: renders an aggregate count summary (`🟢×2 🔵×5 🟡×3 🔴×0`) while masked (`type="password"`), and full per-character overlays exclusively when unmasked.
+- **Encrypted Vault Export (v1.5)**: Authenticated client-side encryption (**AES-256-GCM**) with **PBKDF2-HMAC-SHA256** key derivation (600,000 iterations) using Web Crypto API. Allows exporting session credentials to a local `.cgvault` JSON file with **0 network requests**.
 - **Client-Side Hashing & KDF Lab (v1.4)**: Interactive educational cryptographic playground demonstrating legacy hashes (MD5, SHA-1), modern fast hashes (SHA-256, SHA-512), and Key Derivation Functions (PBKDF2, bcrypt, Argon2id). Offloaded to a **background Web Worker** (`kdfWorker.js`) to keep the UI fluid, with live computation timing (`ms`) and persistent sandbox disclaimers.
 - **Password Typo-Squatting Stress Test (v1.4)**: Evaluates single-edit distance QWERTY mutations (transpositions, shift slips, neighbor key replacements) 100% in-browser against the v1.3 Local Bloom Filter with **0 network calls**.
 - **Local Bloom Filter Pre-Check (v1.3)**: Instant, zero-network, client-side pre-check against SecLists top-100k common passwords using a compact 150KB build-time Bloom filter payload ($p \le 1\%$).

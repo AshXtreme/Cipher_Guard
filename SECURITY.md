@@ -98,11 +98,15 @@ This document describes the threat model, data-handling guarantees, and security
 | Time-to-Crack Offline Simulator | Yes | `frontend/src/utils/crackTimeEstimator.js` | `frontend/src/tests/crackTimeEstimator.test.jsx` |
 | Client-Side Hashing & KDF Lab | Yes | `frontend/src/workers/kdfWorker.js` | `frontend/src/tests/kdfLab.test.jsx` (asserts Web Worker offloading & 0 network calls) |
 | Typo-Squatting Stress Test | Yes | `frontend/src/utils/typoGenerator.js` | `frontend/src/tests/typoGenerator.test.jsx` (asserts 0 network requests) |
+| Visual Entropy Heatmap | Yes | `frontend/src/components/EntropyHeatmap.jsx` | `frontend/src/tests/EntropyHeatmap.test.jsx` (asserts 0 positional leaks when masked) |
+| Encrypted Vault Export (AES-GCM) | Yes | `frontend/src/utils/vaultExporter.js` | `frontend/src/tests/vaultExporter.test.jsx` (asserts AES-GCM + PBKDF2 offline export) |
 
 ---
 
-## 6. v1.2, v1.3 & v1.4 Addenda & Data Classification Guarantees
+## 6. v1.2, v1.3, v1.4 & v1.5 Addenda & Data Classification Guarantees
 
+- **Visual Entropy Heatmap (v1.5)**: Color-codes character categories (symbols, letters, numbers, weak runs). To eliminate shoulder-surfing pattern leaks, while masked (`type="password"`), it renders **ONLY an aggregate, non-positional count summary** (`🟢×2 🔵×5 🟡×3 🔴×0`). Full per-character positional overlays are rendered exclusively in the unmasked state.
+- **Encrypted Vault Export (v1.5)**: Deliberate, user-initiated local file export (`.cgvault`). Payload is encrypted client-side using **AES-256-GCM** with a key derived from a Master Export Passphrase via **PBKDF2-HMAC-SHA256** (600,000 iterations). Operates with **zero network calls** and zero backend logging. Master export passphrases are never stored or transmitted.
 - **Client-Side Hashing & KDF Lab (v1.4)**: All hashing (MD5, SHA-1, SHA-256, SHA-512) and KDF derivations (PBKDF2, bcrypt, Argon2id) run 100% in-browser. Heavy KDF computations are executed inside a **background Web Worker** (`frontend/src/workers/kdfWorker.js`) to prevent main-thread thread-blocking. Input text is retained in memory only, never sent over any network, and rendered with explicit educational sandbox disclaimers.
 - **Typo-Squatting Stress Test (v1.4)**: Evaluates single-edit distance QWERTY mutations (transpositions, shift slips, neighbor key replacements) 100% in-browser against the v1.3 Local Bloom Filter. Operates with **zero network requests** and zero data persistence.
 - **Local Bloom Filter Pre-Check (v1.3)**: The Bloom filter payload (`frontend/src/assets/bloomFilterData.json`) is a static, build-time asset generated from SecLists top-100k common passwords. It is loaded directly into browser memory at application startup. Queries run 100% client-side with **zero network requests**, zero backend logging, and zero third-party dependencies at runtime.

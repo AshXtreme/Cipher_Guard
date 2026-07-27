@@ -9,6 +9,7 @@ import ComparisonTray from './components/ComparisonTray';
 import CrackTimeSimulator from './components/CrackTimeSimulator';
 import TypoStressTest from './components/TypoStressTest';
 import KdfLab from './components/KdfLab';
+import VaultExportModal from './components/VaultExportModal';
 
 // Helper function to compute SHA-1 hash prefix and suffix in browser
 async function computeSha1(text) {
@@ -163,13 +164,16 @@ export default function App() {
         {/* Pane 7: Client-Side Hashing & KDF Lab (MOD-07) */}
         <KdfLab />
 
+        {/* Pane 9: Encrypted Vault Export (MOD-09) */}
+        <VaultExportModal currentPassword={password} />
+
         {/* Pane 5: Password Health Comparison Tool (MOD-05) */}
         <ComparisonTray currentAnalyzerPassword={password} />
       </main>
 
       {/* Footer Bar */}
       <footer className="border-t border-[#2d382c] bg-[#0c0d12]/90 backdrop-blur-md py-3 px-6 text-center text-xs text-[#849581] font-mono z-10">
-        CipherGuard v1.4 — Password Security Analyzer, KDF Playground &amp; Typo Stress Test
+        CipherGuard v1.5 — Password Security Analyzer, KDF Playground &amp; Encrypted Vault Exporter
       </footer>
     </div>
   );

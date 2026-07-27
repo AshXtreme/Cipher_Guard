@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Eye, EyeOff, Lock, Terminal, ShieldAlert, CheckCircle2, AlertTriangle, RefreshCw, Zap } from 'lucide-react';
 import { checkBloomFilter } from '../utils/bloomFilter';
+import EntropyHeatmap from './EntropyHeatmap';
 
 export default function LiveAnalyzerConsole({
   password,
@@ -76,6 +77,11 @@ export default function LiveAnalyzerConsole({
           </button>
         </div>
       </div>
+
+      {/* Visual Password Entropy Heatmap & Character Breakdown */}
+      {password && (
+        <EntropyHeatmap password={password} showPassword={showPassword} />
+      )}
 
       {/* Instant Bloom Filter Pre-Check Warning Badge */}
       {password && isBloomFilterMatch && (
