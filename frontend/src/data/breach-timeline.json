@@ -1,0 +1,164 @@
+[
+  {
+    "id": "rockyou-2009",
+    "name": "RockYou",
+    "approximateYear": 2009,
+    "accountsAffected": "32 Million",
+    "hashMethodReported": "Plaintext (No Hashing)",
+    "significanceNote": "Pivotal breach whose leaked wordlist ('rockyou.txt') became an industry standard benchmark for password cracking tools.",
+    "publicSourceUrl": "https://techcrunch.com/2009/12/14/rockyou-hack-security-myspace-facebook/"
+  },
+  {
+    "id": "sony-psn-2011",
+    "name": "Sony PlayStation Network",
+    "approximateYear": 2011,
+    "accountsAffected": "77 Million",
+    "hashMethodReported": "Plaintext / Unsalted SHA-1",
+    "significanceNote": "Forced a 23-day outage and highlighted widespread vulnerability in corporate credential storage practices.",
+    "publicSourceUrl": "https://www.reuters.com/article/us-sony-idUSTRE73P6WB20110426"
+  },
+  {
+    "id": "dropbox-2012",
+    "name": "Dropbox",
+    "approximateYear": 2012,
+    "accountsAffected": "68 Million",
+    "hashMethodReported": "bcrypt & SHA-1 + Salt",
+    "significanceNote": "Demonstrated the resilience of memory-hard bcrypt hashing against offline brute-force cracking attempts.",
+    "publicSourceUrl": "https://www.theguardian.com/technology/2016/aug/31/dropbox-hack-details-68m-passwords-stolen"
+  },
+  {
+    "id": "linkedin-2012",
+    "name": "LinkedIn",
+    "approximateYear": 2012,
+    "accountsAffected": "117 Million",
+    "hashMethodReported": "Unsalted SHA-1",
+    "significanceNote": "Unsalted hashes allowed attackers to crack 90%+ of credentials rapidly using pre-computed rainbow tables.",
+    "publicSourceUrl": "https://www.wired.com/2016/05/linkedin-hack-larger-thought-100-million-passwords/"
+  },
+  {
+    "id": "adobe-2013",
+    "name": "Adobe Systems",
+    "approximateYear": 2013,
+    "accountsAffected": "152 Million",
+    "hashMethodReported": "Symmetric Triple-DES (ECB mode)",
+    "significanceNote": "Reused ECB mode encryption revealed identical ciphertext blocks across matching user passwords.",
+    "publicSourceUrl": "https://krebsonsecurity.com/2013/11/adobe-speculation-on-38-million-leak/"
+  },
+  {
+    "id": "yahoo-2013",
+    "name": "Yahoo (3 Billion Breach)",
+    "approximateYear": 2013,
+    "accountsAffected": "3 Billion",
+    "hashMethodReported": "MD5 / MD5-crypt",
+    "significanceNote": "The largest credential breach in internet history, affecting every user account registered on Yahoo.",
+    "publicSourceUrl": "https://www.nytimes.com/2017/10/03/technology/yahoo-hack-3-billion-accounts.html"
+  },
+  {
+    "id": "target-2013",
+    "name": "Target Retail",
+    "approximateYear": 2013,
+    "accountsAffected": "110 Million",
+    "hashMethodReported": "Network Intrusion & Payment Tokens",
+    "significanceNote": "Showcased third-party HVAC vendor credential compromise leading to widespread enterprise network infiltration.",
+    "publicSourceUrl": "https://krebsonsecurity.com/2014/02/target-hackers-broke-in-via-hvac-company/"
+  },
+  {
+    "id": "ebay-2014",
+    "name": "eBay",
+    "approximateYear": 2014,
+    "accountsAffected": "145 Million",
+    "hashMethodReported": "Custom Salted Hash",
+    "significanceNote": "Forced a global mandatory password reset across all 145M active users.",
+    "publicSourceUrl": "https://www.bbc.com/news/technology-27503286"
+  },
+  {
+    "id": "ashley-madison-2015",
+    "name": "Ashley Madison",
+    "approximateYear": 2015,
+    "accountsAffected": "36 Million",
+    "hashMethodReported": "bcrypt + MD5 (tokens)",
+    "significanceNote": "Flawed implementation exposing MD5 tokens allowed bypass of the primary bcrypt password protections.",
+    "publicSourceUrl": "https://arstechnica.com/information-technology/2015/09/how-the-ashley-madison-database-dump-became-a-disaster/"
+  },
+  {
+    "id": "myspace-2016",
+    "name": "Myspace",
+    "approximateYear": 2016,
+    "accountsAffected": "360 Million",
+    "hashMethodReported": "Unsalted SHA-1 (Truncated to 10 chars)",
+    "significanceNote": "Truncated password hashes severely limited entropy and simplified dictionary rainbow table lookups.",
+    "publicSourceUrl": "https://www.bbc.com/news/technology-36418047"
+  },
+  {
+    "id": "equifax-2017",
+    "name": "Equifax",
+    "approximateYear": 2017,
+    "accountsAffected": "147 Million",
+    "hashMethodReported": "Apache Struts Vulnerability",
+    "significanceNote": "Unpatched web framework vulnerability led to massive PII and financial record exposure.",
+    "publicSourceUrl": "https://www.ftc.gov/enforcement/refunds/equifax-data-breach-settlement"
+  },
+  {
+    "id": "marriott-2018",
+    "name": "Marriott Starwood",
+    "approximateYear": 2018,
+    "accountsAffected": "500 Million",
+    "hashMethodReported": "AES-128 Encrypted Credentials",
+    "significanceNote": "Protracted 4-year unauthorized access highlighting long-term stealth persistence in enterprise infrastructure.",
+    "publicSourceUrl": "https://www.washingtonpost.com/technology/2018/11/30/marriott-discloses-massive-data-breach-affecting-up-500-million-guests/"
+  },
+  {
+    "id": "canva-2019",
+    "name": "Canva",
+    "approximateYear": 2019,
+    "accountsAffected": "137 Million",
+    "hashMethodReported": "bcrypt",
+    "significanceNote": "Demonstrated that proper bcrypt hashing prevents mass password cracking even when database tables leak.",
+    "publicSourceUrl": "https://techcrunch.com/2019/05/24/canva-data-breach/"
+  },
+  {
+    "id": "zynga-2019",
+    "name": "Zynga",
+    "approximateYear": 2019,
+    "accountsAffected": "218 Million",
+    "hashMethodReported": "SHA-256 + Salt",
+    "significanceNote": "Large-scale breach affecting mobile gaming accounts, driving wider adoption of multi-factor authentication (MFA).",
+    "publicSourceUrl": "https://www.cnet.com/news/privacy/zynga-data-breach-exposes-passwords-for-218-million-words-with-friends-players/"
+  },
+  {
+    "id": "solarwinds-2020",
+    "name": "SolarWinds Supply Chain",
+    "approximateYear": 2020,
+    "accountsAffected": "18,000 Organizations",
+    "hashMethodReported": "Supply Chain Build Infiltration",
+    "significanceNote": "Tampered software updates compromised government agencies and Fortune 500 enterprises worldwide.",
+    "publicSourceUrl": "https://www.cisa.gov/news-events/cybersecurity-advisories/aa20-352a"
+  },
+  {
+    "id": "tmobile-2021",
+    "name": "T-Mobile",
+    "approximateYear": 2021,
+    "accountsAffected": "76 Million",
+    "hashMethodReported": "SIM / IMEI Telemetry Leak",
+    "significanceNote": "High-risk telecom breach enabling targeted SIM-swapping and 2FA bypass attacks.",
+    "publicSourceUrl": "https://www.wsj.com/articles/t-mobile-investigating-data-breach-11629038234"
+  },
+  {
+    "id": "twitter-2022",
+    "name": "Twitter (X)",
+    "approximateYear": 2022,
+    "accountsAffected": "200 Million",
+    "hashMethodReported": "API Vulnerability Data Scrape",
+    "significanceNote": "API rate-limiting bypass allowed scraping of public handles linked to private email addresses.",
+    "publicSourceUrl": "https://www.reuters.com/technology/hackers-stole-emails-200-million-twitter-users-says-security-researcher-2023-01-05/"
+  },
+  {
+    "id": "lastpass-2022",
+    "name": "LastPass Vault Leak",
+    "approximateYear": 2022,
+    "accountsAffected": "30 Million",
+    "hashMethodReported": "PBKDF2-HMAC-SHA256 (256-bit AES Vaults)",
+    "significanceNote": "Exposed encrypted vault blobs to offline brute-forcing, reinforcing the need for high iteration counts and strong master passphrases.",
+    "publicSourceUrl": "https://blog.lastpass.com/posts/2022/12/notice-of-recent-security-incident"
+  }
+]

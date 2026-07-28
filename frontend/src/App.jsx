@@ -10,6 +10,7 @@ import CrackTimeSimulator from './components/CrackTimeSimulator';
 import TypoStressTest from './components/TypoStressTest';
 import KdfLab from './components/KdfLab';
 import VaultExportModal from './components/VaultExportModal';
+import BreachTimeline from './components/BreachTimeline';
 
 // Helper function to compute SHA-1 hash prefix and suffix in browser
 async function computeSha1(text) {
@@ -167,13 +168,16 @@ export default function App() {
         {/* Pane 9: Encrypted Vault Export (MOD-09) */}
         <VaultExportModal currentPassword={password} />
 
+        {/* Pane 10: Breach-Leak Exposure Timeline (MOD-10) */}
+        <BreachTimeline />
+
         {/* Pane 5: Password Health Comparison Tool (MOD-05) */}
         <ComparisonTray currentAnalyzerPassword={password} />
       </main>
 
       {/* Footer Bar */}
       <footer className="border-t border-[#2d382c] bg-[#0c0d12]/90 backdrop-blur-md py-3 px-6 text-center text-xs text-[#849581] font-mono z-10">
-        CipherGuard v1.5 — Password Security Analyzer, KDF Playground &amp; Encrypted Vault Exporter
+        CipherGuard v1.6 — Password Security Analyzer, KDF Playground &amp; Historical Breach Reference
       </footer>
     </div>
   );

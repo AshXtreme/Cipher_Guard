@@ -100,11 +100,15 @@ This document describes the threat model, data-handling guarantees, and security
 | Typo-Squatting Stress Test | Yes | `frontend/src/utils/typoGenerator.js` | `frontend/src/tests/typoGenerator.test.jsx` (asserts 0 network requests) |
 | Visual Entropy Heatmap | Yes | `frontend/src/components/EntropyHeatmap.jsx` | `frontend/src/tests/EntropyHeatmap.test.jsx` (asserts 0 positional leaks when masked) |
 | Encrypted Vault Export (AES-GCM) | Yes | `frontend/src/utils/vaultExporter.js` | `frontend/src/tests/vaultExporter.test.jsx` (asserts AES-GCM + PBKDF2 offline export) |
+| Breach-Leak Exposure Timeline | Yes | `frontend/src/data/breach-timeline.json` | `frontend/src/tests/BreachTimeline.test.jsx` (asserts static dataset & 0 network calls) |
+| Password Policy Compatibility Generator | Yes | `frontend/src/utils/policyGenerator.js` | `frontend/src/tests/policyGenerator.test.jsx` (asserts CSPRNG Fisher-Yates & rule satisfaction) |
 
 ---
 
-## 6. v1.2, v1.3, v1.4 & v1.5 Addenda & Data Classification Guarantees
+## 6. v1.2, v1.3, v1.4, v1.5 & v1.6 Addenda & Data Classification Guarantees
 
+- **Breach-Leak Exposure Timeline (v1.6)**: Serves as an educational, historical reference tool built on a bundled static JSON dataset (`frontend/src/data/breach-timeline.json`). Operates with **zero network calls**. CipherGuard deliberately refrains from implementing live per-email or per-domain breach lookups, preserving the $0.00 zero-cost model and ensuring personal credentials are never transmitted over the network.
+- **Password Policy Compatibility Generator (v1.6)**: All constrained and pronounceable password generation relies exclusively on system CSPRNG (`crypto.getRandomValues`). Character positioning uses an $O(N)$ CSPRNG Fisher-Yates shuffle. User-provided disallowed character blocklists are evaluated purely as static string data without dynamic code execution (`eval()`). Real entropy is calculated against the actual constrained pool and displayed with an explicit warning when policy limits reduce entropy below ~40 bits.
 - **Visual Entropy Heatmap (v1.5)**: Color-codes character categories (symbols, letters, numbers, weak runs). To eliminate shoulder-surfing pattern leaks, while masked (`type="password"`), it renders **ONLY an aggregate, non-positional count summary** (`🟢×2 🔵×5 🟡×3 🔴×0`). Full per-character positional overlays are rendered exclusively in the unmasked state.
 - **Encrypted Vault Export (v1.5)**: Deliberate, user-initiated local file export (`.cgvault`). Payload is encrypted client-side using **AES-256-GCM** with a key derived from a Master Export Passphrase via **PBKDF2-HMAC-SHA256** (600,000 iterations). Operates with **zero network calls** and zero backend logging. Master export passphrases are never stored or transmitted.
 - **Client-Side Hashing & KDF Lab (v1.4)**: All hashing (MD5, SHA-1, SHA-256, SHA-512) and KDF derivations (PBKDF2, bcrypt, Argon2id) run 100% in-browser. Heavy KDF computations are executed inside a **background Web Worker** (`frontend/src/workers/kdfWorker.js`) to prevent main-thread thread-blocking. Input text is retained in memory only, never sent over any network, and rendered with explicit educational sandbox disclaimers.

@@ -1,12 +1,13 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { Sliders, Dices, Copy, Check, Shield, BookOpen, Key, Clock, XCircle, AlertTriangle } from 'lucide-react';
+import { Sliders, Dices, Copy, Check, Shield, BookOpen, Key, Clock, XCircle, AlertTriangle, Settings2, Sparkles } from 'lucide-react';
 import { useClipboardTimer } from '../hooks/useClipboardTimer';
+import { generatePolicyPassword, generatePronounceablePassword } from '../utils/policyGenerator';
 
 const isDicewareEnabled = import.meta.env.VITE_FEATURE_DICEWARE === 'true';
 const isCopyBufferEnabled = import.meta.env.VITE_FEATURE_COPY_BUFFER === 'true';
 
 export default function TactileGenerator({ onGenerateToAnalyzer }) {
-  const [genMode, setGenMode] = useState('random'); // 'random' | 'diceware'
+  const [genMode, setGenMode] = useState('random'); // 'random' | 'diceware' | 'policy' | 'pronounceable'
   const [length, setLength] = useState(16);
   const [includeSymbols, setIncludeSymbols] = useState(true);
   const [includeNumbers, setIncludeNumbers] = useState(true);
@@ -15,6 +16,17 @@ export default function TactileGenerator({ onGenerateToAnalyzer }) {
   // Diceware State
   const [wordCount, setWordCount] = useState(6);
   const [separator, setSeparator] = useState('-');
+
+  // v1.6 Policy Compatibility State
+  const [minLength, setMinLength] = useState(12);
+  const [maxLength, setMaxLength] = useState(16);
+  const [exactSymbols, setExactSymbols] = useState(1);
+  const [exactDigits, setExactDigits] = useState(2);
+  const [exactUpper, setExactUpper] = useState(2);
+  const [allowedSymbols, setAllowedSymbols] = useState('!@#$%^&*()_+-=[]{}');
+  const [blocklist, setBlocklist] = useState('');
+  const [policyError, setPolicyError] = useState(null);
+  const [isLowEntropyWarning, setIsLowEntropyWarning] = useState(false);
 
   const [generatedPassword, setGeneratedPassword] = useState('');
   const [entropyBits, setEntropyBits] = useState(0);
@@ -25,36 +37,67 @@ export default function TactileGenerator({ onGenerateToAnalyzer }) {
 
   const fetchGeneratedPassword = useCallback(async () => {
     setIsGenerating(true);
+    setPolicyError(null);
+    setIsLowEntropyWarning(false);
+
     try {
-      let query;
-      if (genMode === 'diceware' && isDicewareEnabled) {
-        query = new URLSearchParams({
+      if (genMode === 'policy') {
+        const policyRes = generatePolicyPassword({
+          minLength,
+          maxLength,
+          exactSymbols,
+          exactDigits,
+          exactUpper,
+          allowedSymbols,
+          blocklist,
+          mode: 'policy'
+        });
+        setGeneratedPassword(policyRes.password);
+        setEntropyBits(policyRes.entropyBits);
+        setIsLowEntropyWarning(policyRes.isLowEntropy);
+      } else if (genMode === 'pronounceable') {
+        const pronRes = generatePronounceablePassword({ minLength });
+        setGeneratedPassword(pronRes.password);
+        setEntropyBits(pronRes.entropyBits);
+        setIsLowEntropyWarning(pronRes.isLowEntropy);
+      } else if (genMode === 'diceware' && isDicewareEnabled) {
+        const query = new URLSearchParams({
           mode: 'diceware',
           word_count: wordCount.toString(),
           separator: separator
         });
+        const res = await fetch(`/api/generate?${query.toString()}`);
+        if (res.ok) {
+          const data = await res.json();
+          setGeneratedPassword(data.password);
+          setEntropyBits(data.entropy_bits);
+        }
       } else {
-        query = new URLSearchParams({
+        const query = new URLSearchParams({
           mode: 'random',
           length: length.toString(),
           symbols: includeSymbols.toString(),
           numbers: includeNumbers.toString(),
           exclude_ambiguous: excludeAmbiguous.toString()
         });
-      }
-
-      const res = await fetch(`/api/generate?${query.toString()}`);
-      if (res.ok) {
-        const data = await res.json();
-        setGeneratedPassword(data.password);
-        setEntropyBits(data.entropy_bits);
+        const res = await fetch(`/api/generate?${query.toString()}`);
+        if (res.ok) {
+          const data = await res.json();
+          setGeneratedPassword(data.password);
+          setEntropyBits(data.entropy_bits);
+        }
       }
     } catch (err) {
-      console.error("Failed to generate password:", err);
+      console.error("Generator error:", err);
+      setPolicyError(err.message || "Failed to generate password.");
     } finally {
       setIsGenerating(false);
     }
-  }, [genMode, length, includeSymbols, includeNumbers, excludeAmbiguous, wordCount, separator]);
+  }, [
+    genMode, length, includeSymbols, includeNumbers, excludeAmbiguous,
+    wordCount, separator, minLength, maxLength, exactSymbols, exactDigits,
+    exactUpper, allowedSymbols, blocklist
+  ]);
 
   // Initial and reactive fetch on control change
   useEffect(() => {
@@ -89,46 +132,74 @@ export default function TactileGenerator({ onGenerateToAnalyzer }) {
         </span>
       </div>
 
-      {/* Mode Selector Toggle (Feature-flagged) */}
-      {isDicewareEnabled && (
-        <div className="grid grid-cols-2 gap-2 bg-[#050505] p-1.5 rounded-lg border border-[#2d382c] font-mono text-xs">
-          <button
-            type="button"
-            onClick={() => setGenMode('random')}
-            className={`py-2 px-3 rounded-md flex items-center justify-center gap-2 transition-all ${
-              genMode === 'random'
-                ? 'bg-[#00ff66]/20 text-[#00ff66] border border-[#00ff66]/40 font-bold shadow-sm'
-                : 'text-[#849581] hover:text-[#e3e1ec]'
-            }`}
-          >
-            <Key className="w-3.5 h-3.5" />
-            <span>Random Characters</span>
-          </button>
+      {/* Mode Selector Toggle */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 bg-[#050505] p-1.5 rounded-lg border border-[#2d382c] font-mono text-xs">
+        <button
+          type="button"
+          onClick={() => setGenMode('random')}
+          className={`py-2 px-2 rounded flex items-center justify-center gap-1.5 transition-all text-[11px] ${
+            genMode === 'random'
+              ? 'bg-[#00ff66]/20 text-[#00ff66] border border-[#00ff66]/40 font-bold'
+              : 'text-[#849581] hover:text-[#e3e1ec]'
+          }`}
+        >
+          <Key className="w-3 h-3" />
+          <span>Random</span>
+        </button>
+
+        {isDicewareEnabled && (
           <button
             type="button"
             onClick={() => setGenMode('diceware')}
-            className={`py-2 px-3 rounded-md flex items-center justify-center gap-2 transition-all ${
+            className={`py-2 px-2 rounded flex items-center justify-center gap-1.5 transition-all text-[11px] ${
               genMode === 'diceware'
-                ? 'bg-[#00ff66]/20 text-[#00ff66] border border-[#00ff66]/40 font-bold shadow-sm'
+                ? 'bg-[#00ff66]/20 text-[#00ff66] border border-[#00ff66]/40 font-bold'
                 : 'text-[#849581] hover:text-[#e3e1ec]'
             }`}
           >
-            <BookOpen className="w-3.5 h-3.5" />
-            <span>Passphrase (Diceware)</span>
+            <BookOpen className="w-3 h-3" />
+            <span>Diceware</span>
           </button>
-        </div>
-      )}
+        )}
+
+        <button
+          type="button"
+          onClick={() => setGenMode('policy')}
+          className={`py-2 px-2 rounded flex items-center justify-center gap-1.5 transition-all text-[11px] ${
+            genMode === 'policy'
+              ? 'bg-[#00ff66]/20 text-[#00ff66] border border-[#00ff66]/40 font-bold'
+              : 'text-[#849581] hover:text-[#e3e1ec]'
+          }`}
+        >
+          <Settings2 className="w-3 h-3" />
+          <span>Policy Rules</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setGenMode('pronounceable')}
+          className={`py-2 px-2 rounded flex items-center justify-center gap-1.5 transition-all text-[11px] ${
+            genMode === 'pronounceable'
+              ? 'bg-[#00ff66]/20 text-[#00ff66] border border-[#00ff66]/40 font-bold'
+              : 'text-[#849581] hover:text-[#e3e1ec]'
+          }`}
+        >
+          <Sparkles className="w-3 h-3" />
+          <span>Pronounceable</span>
+        </button>
+      </div>
 
       {/* Output Display */}
-      <div className="bg-[#050505] border border-[#2d382c] p-4 rounded-lg flex flex-col gap-2">
-        <div className="flex justify-between items-center text-[10px] font-mono text-[#849581]">
+      <div className="bg-[#050505] border border-[#2d382c] p-4 rounded-lg flex flex-col gap-2 font-mono">
+        <div className="flex justify-between items-center text-[10px] text-[#849581]">
           <span>GENERATED_OUTPUT ({genMode.toUpperCase()})</span>
-          <span className="text-[#00ff66] font-bold">
+          <span className={`font-bold ${isLowEntropyWarning ? 'text-amber-400' : 'text-[#00ff66]'}`}>
             ENTROPY: {entropyBits} BITS
           </span>
         </div>
+
         <div className="flex items-center justify-between gap-3">
-          <div className="flex-1 font-mono text-base md:text-lg text-[#00ff66] text-glow tracking-wider overflow-x-auto whitespace-nowrap py-1">
+          <div className="flex-1 text-base md:text-lg text-[#00ff66] text-glow tracking-wider overflow-x-auto whitespace-nowrap py-1">
             {generatedPassword || "GENERATING..."}
           </div>
           <div className="flex items-center gap-2">
@@ -150,9 +221,27 @@ export default function TactileGenerator({ onGenerateToAnalyzer }) {
           </div>
         </div>
 
-        {/* Auto-Expiring Buffer Active Countdown Badge & Honest Disclaimer */}
+        {/* Validation Error Message */}
+        {policyError && (
+          <div className="mt-1 p-2 rounded bg-red-950/80 border border-red-800 text-red-400 text-xs flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 shrink-0 text-red-400" />
+            <span>{policyError}</span>
+          </div>
+        )}
+
+        {/* Low Entropy Policy Warning (v1.6 Section 2.3) */}
+        {isLowEntropyWarning && (
+          <div className="mt-1 p-2.5 rounded bg-amber-950/40 border border-amber-800/80 text-amber-300 text-[11px] leading-relaxed flex items-start gap-2">
+            <AlertTriangle className="w-4 h-4 shrink-0 text-amber-400 mt-0.5" />
+            <span>
+              <strong>Restricted Policy Warning:</strong> This site's password policy limits how strong a password can be here — consider a passphrase for your master accounts elsewhere, or ask the site to modernize its rules.
+            </span>
+          </div>
+        )}
+
+        {/* Auto-Expiring Buffer Active Countdown Badge */}
         {isCopyBufferEnabled && copied && timeLeft > 0 && (
-          <div className="mt-2 pt-2 border-t border-[#1a241b] flex items-center justify-between text-xs font-mono">
+          <div className="mt-2 pt-2 border-t border-[#1a241b] flex items-center justify-between text-xs">
             <div className="flex items-center gap-1.5 text-[#00ff66]">
               <Clock className="w-3.5 h-3.5 animate-pulse" />
               <span>Copied! Auto-clearing clipboard in <strong className="text-yellow-400">{timeLeft}s</strong></span>
@@ -160,7 +249,6 @@ export default function TactileGenerator({ onGenerateToAnalyzer }) {
             <button
               onClick={cancelAutoClear}
               className="text-[10px] text-[#849581] hover:text-red-400 flex items-center gap-1 transition-colors"
-              title="Cancel auto-clear countdown"
             >
               <XCircle className="w-3 h-3" />
               <span>Cancel</span>
@@ -169,13 +257,114 @@ export default function TactileGenerator({ onGenerateToAnalyzer }) {
         )}
       </div>
 
-      {/* Honest Limitation Disclaimer */}
-      {isCopyBufferEnabled && (
-        <div className="flex items-start gap-2 p-2.5 rounded bg-[#050505] border border-[#2d382c] text-[11px] font-mono text-[#849581]">
-          <AlertTriangle className="w-3.5 h-3.5 text-yellow-500 shrink-0 mt-0.5" />
-          <span>
-            We'll try to clear your clipboard after 30s. This isn't guaranteed on every browser/OS — don't rely on it as your only protection on a shared device.
-          </span>
+      {/* Controls: Policy Rules Mode (v1.6) */}
+      {genMode === 'policy' && (
+        <div className="space-y-3 font-mono text-xs text-[#e3e1ec] bg-[#050505] p-3 rounded-lg border border-[#2d382c]">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-[10px] text-[#849581]">MIN_LENGTH</label>
+              <input
+                type="number"
+                min={4}
+                max={64}
+                value={minLength}
+                onChange={(e) => setMinLength(parseInt(e.target.value) || 4)}
+                className="w-full terminal-input text-xs py-1.5 px-2 rounded bg-[#08090d] border border-[#2d382c]"
+              />
+            </div>
+            <div>
+              <label className="text-[10px] text-[#849581]">MAX_LENGTH</label>
+              <input
+                type="number"
+                min={4}
+                max={64}
+                value={maxLength}
+                onChange={(e) => setMaxLength(parseInt(e.target.value) || 4)}
+                className="w-full terminal-input text-xs py-1.5 px-2 rounded bg-[#08090d] border border-[#2d382c]"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2">
+            <div>
+              <label className="text-[10px] text-[#849581]">EXACT_SYMBOLS</label>
+              <input
+                type="number"
+                min={0}
+                max={10}
+                value={exactSymbols}
+                onChange={(e) => setExactSymbols(parseInt(e.target.value) || 0)}
+                className="w-full terminal-input text-xs py-1 px-2 rounded bg-[#08090d] border border-[#2d382c]"
+              />
+            </div>
+            <div>
+              <label className="text-[10px] text-[#849581]">EXACT_DIGITS</label>
+              <input
+                type="number"
+                min={0}
+                max={10}
+                value={exactDigits}
+                onChange={(e) => setExactDigits(parseInt(e.target.value) || 0)}
+                className="w-full terminal-input text-xs py-1 px-2 rounded bg-[#08090d] border border-[#2d382c]"
+              />
+            </div>
+            <div>
+              <label className="text-[10px] text-[#849581]">EXACT_UPPER</label>
+              <input
+                type="number"
+                min={0}
+                max={10}
+                value={exactUpper}
+                onChange={(e) => setExactUpper(parseInt(e.target.value) || 0)}
+                className="w-full terminal-input text-xs py-1 px-2 rounded bg-[#08090d] border border-[#2d382c]"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="text-[10px] text-[#849581]">ALLOWED_SYMBOLS_LIST</label>
+            <input
+              type="text"
+              value={allowedSymbols}
+              onChange={(e) => setAllowedSymbols(e.target.value)}
+              placeholder="e.g. !@#$%"
+              className="w-full terminal-input text-xs py-1.5 px-2 rounded bg-[#08090d] border border-[#2d382c]"
+            />
+          </div>
+
+          <div>
+            <label className="text-[10px] text-[#849581]">DISALLOWED_BLOCKLIST (EXCLUDE)</label>
+            <input
+              type="text"
+              value={blocklist}
+              onChange={(e) => setBlocklist(e.target.value)}
+              placeholder="e.g. &amp;&lt;&gt;%&quot;'"
+              className="w-full terminal-input text-xs py-1.5 px-2 rounded bg-[#08090d] border border-[#2d382c]"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Controls: Pronounceable Mode (v1.6) */}
+      {genMode === 'pronounceable' && (
+        <div className="space-y-3 font-mono text-xs text-[#e3e1ec] bg-[#050505] p-3 rounded-lg border border-[#2d382c]">
+          <div className="space-y-1.5">
+            <div className="flex justify-between text-[#849581]">
+              <span>TARGET_LENGTH</span>
+              <span className="text-[#00ff66] font-bold">{minLength} CHARS</span>
+            </div>
+            <input
+              type="range"
+              min={8}
+              max={32}
+              value={minLength}
+              onChange={(e) => setMinLength(parseInt(e.target.value))}
+              className="w-full h-1.5 bg-[#08090d] rounded border border-[#2d382c] accent-[#00ff66] cursor-pointer"
+            />
+          </div>
+          <p className="text-[11px] text-[#849581] leading-relaxed">
+            Generates memorable passwords using alternating CVC/CVCV consonant-vowel syllables powered by CSPRNG, with trailing digits &amp; symbols.
+          </p>
         </div>
       )}
 
@@ -230,56 +419,6 @@ export default function TactileGenerator({ onGenerateToAnalyzer }) {
               />
               <span className="text-[11px]">No Ambiguous</span>
             </label>
-          </div>
-        </div>
-      )}
-
-      {/* Controls: Diceware Passphrase Mode */}
-      {genMode === 'diceware' && isDicewareEnabled && (
-        <div className="space-y-4 font-mono text-xs text-[#e3e1ec]">
-          {/* Word Count Slider */}
-          <div className="space-y-1.5">
-            <div className="flex justify-between text-[#849581]">
-              <span className="flex items-center gap-1.5">
-                <BookOpen className="w-3.5 h-3.5 text-[#00ff66]" />
-                WORD_COUNT (EFF Large List)
-              </span>
-              <span className="text-[#00ff66] font-bold text-sm">{wordCount} WORDS</span>
-            </div>
-            <input
-              type="range"
-              min={3}
-              max={12}
-              value={wordCount}
-              onChange={(e) => setWordCount(parseInt(e.target.value))}
-              className="w-full h-1.5 bg-[#050505] rounded border border-[#2d382c] accent-[#00ff66] cursor-pointer"
-            />
-          </div>
-
-          {/* Separator Chooser */}
-          <div className="space-y-1.5">
-            <label className="text-[11px] text-[#849581]">WORD_SEPARATOR</label>
-            <div className="grid grid-cols-4 gap-2">
-              {[
-                { label: 'Hyphen (-)', val: '-' },
-                { label: 'Underscore (_)', val: '_' },
-                { label: 'Dot (.)', val: '.' },
-                { label: 'Space ( )', val: ' ' }
-              ].map((sep) => (
-                <button
-                  key={sep.val}
-                  type="button"
-                  onClick={() => setSeparator(sep.val)}
-                  className={`py-2 text-[11px] rounded border transition-all ${
-                    separator === sep.val
-                      ? 'bg-[#00ff66]/20 border-[#00ff66] text-[#00ff66] font-bold'
-                      : 'bg-[#050505] border-[#2d382c] text-[#849581] hover:text-[#e3e1ec]'
-                  }`}
-                >
-                  {sep.label}
-                </button>
-              ))}
-            </div>
           </div>
         </div>
       )}
