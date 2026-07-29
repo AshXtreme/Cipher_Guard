@@ -11,6 +11,8 @@ import TypoStressTest from './components/TypoStressTest';
 import KdfLab from './components/KdfLab';
 import VaultExportModal from './components/VaultExportModal';
 import BreachTimeline from './components/BreachTimeline';
+import TotpGenerator from './components/TotpGenerator';
+import AuditDashboard from './components/AuditDashboard';
 
 // Helper function to compute SHA-1 hash prefix and suffix in browser
 async function computeSha1(text) {
@@ -171,13 +173,19 @@ export default function App() {
         {/* Pane 10: Breach-Leak Exposure Timeline (MOD-10) */}
         <BreachTimeline />
 
+        {/* Pane 11: Offline TOTP / 2FA QR Generator Sandbox (MOD-11) */}
+        <TotpGenerator />
+
+        {/* Pane 12: Interactive Password Audit Dashboard (MOD-12) */}
+        <AuditDashboard />
+
         {/* Pane 5: Password Health Comparison Tool (MOD-05) */}
         <ComparisonTray currentAnalyzerPassword={password} />
       </main>
 
       {/* Footer Bar */}
       <footer className="border-t border-[#2d382c] bg-[#0c0d12]/90 backdrop-blur-md py-3 px-6 text-center text-xs text-[#849581] font-mono z-10">
-        CipherGuard v1.6 — Password Security Analyzer, KDF Playground &amp; Historical Breach Reference
+        CipherGuard v1.7 — Password Security Analyzer, KDF Playground, 2FA Sandbox &amp; In-Browser Password Audit Dashboard
       </footer>
     </div>
   );

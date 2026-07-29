@@ -20,6 +20,10 @@ For the full threat model, data-handling guarantees, and how to report a vulnera
 └─────────────────┘                            └──────────────────┘                     └──────────────────────┘
 ```
 
+> **Release Notice**: `cipherguard-web` has reached its final stable feature release (**v1.7.0**).
+
+- **Offline TOTP / 2FA QR Generator Sandbox (v1.7.0)**: In-browser 2FA secret generator and scanner sandbox producing CSPRNG base32 secrets (`crypto.getRandomValues`), scannable `otpauth://` QR codes (`qrcode.react`), and rotating 30-second 6-digit TOTP tokens (`otplib`). Operates with **0 network requests**.
+- **Interactive Password Audit Dashboard (v1.7.0)**: In-browser batch password auditing supporting line-by-line paste and local `.txt`/`.csv` file import via native `FileReader` API. Features **Reuse Detector** (duplicate matching), **Weak Link Alert** (lowest score entry), and **Entropy/Score Distribution Chart** (histogram tier breakdown) with zero persistence and **0 network calls**.
 - **Breach-Leak Exposure Timeline (v1.6)**: Educational, historical reference timeline rendering citable breach statistics (RockYou, Adobe, Yahoo, LinkedIn, Canva, LastPass) powered by a static bundled dataset (`breach-timeline.json`). Operates 100% offline with **0 network requests**.
 - **Password Policy Compatibility Generator (v1.6)**: Rule-builder panel allowing custom min/max lengths, exact character counts (symbols, digits, uppercase), allow/blocklists, and **Memorable Pronounceable mode** (`CVC`/`CVCV`). Powered by CSPRNG (`crypto.getRandomValues`) and an $O(N)$ **Fisher-Yates shuffle**, featuring real entropy calculations and policy restriction warnings.
 - **Visual Password Entropy Heatmap (v1.5)**: Color-coded real-time character breakdown (🟢 Symbols ❖, 🔵 Letters Aa, 🟡 Numbers 12, 🔴 Weak Runs ⚠️). Features a **shoulder-surfing privacy design**: renders an aggregate count summary (`🟢×2 🔵×5 🟡×3 🔴×0`) while masked (`type="password"`), and full per-character overlays exclusively when unmasked.

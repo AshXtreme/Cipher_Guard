@@ -102,11 +102,15 @@ This document describes the threat model, data-handling guarantees, and security
 | Encrypted Vault Export (AES-GCM) | Yes | `frontend/src/utils/vaultExporter.js` | `frontend/src/tests/vaultExporter.test.jsx` (asserts AES-GCM + PBKDF2 offline export) |
 | Breach-Leak Exposure Timeline | Yes | `frontend/src/data/breach-timeline.json` | `frontend/src/tests/BreachTimeline.test.jsx` (asserts static dataset & 0 network calls) |
 | Password Policy Compatibility Generator | Yes | `frontend/src/utils/policyGenerator.js` | `frontend/src/tests/policyGenerator.test.jsx` (asserts CSPRNG Fisher-Yates & rule satisfaction) |
+| Offline TOTP / 2FA QR Generator Sandbox | Yes | `frontend/src/utils/totpUtils.js` | `frontend/src/tests/TotpGenerator.test.jsx` (asserts CSPRNG secret & 0 network calls) |
+| Session Password Audit Dashboard | Yes | `frontend/src/utils/auditEngine.js` | `frontend/src/tests/AuditDashboard.test.jsx` (asserts 0 persistence & 0 network calls) |
 
 ---
 
-## 6. v1.2, v1.3, v1.4, v1.5 & v1.6 Addenda & Data Classification Guarantees
+## 6. v1.2, v1.3, v1.4, v1.5, v1.6 & v1.7 Addenda & Data Classification Guarantees
 
+- **Offline TOTP / 2FA QR Generator Sandbox (v1.7)**: Secret generation uses system CSPRNG (`crypto.getRandomValues`) to produce 160-bit Base32 secrets. QR code generation (`qrcode.react`) and rotating 6-digit TOTP token calculations (`otplib`) run 100% in-browser with **zero network calls**. Clicking "Regenerate" instantly overwrites and purges the previous secret from volatile React state. Includes mandatory sandbox practice disclosures.
+- **Session Password Audit Dashboard (v1.7)**: Batch password analysis (reuse detection, weak-link alerts, entropy distribution) runs 100% client-side. Local file imports use the native browser `FileReader` API. Batch data is held strictly in volatile React state with **zero browser storage persistence** (`localStorage`/`IndexedDB`) and **zero network calls**. All batch data is purged on page refresh, navigation, or clicking "Clear Audit".
 - **Breach-Leak Exposure Timeline (v1.6)**: Serves as an educational, historical reference tool built on a bundled static JSON dataset (`frontend/src/data/breach-timeline.json`). Operates with **zero network calls**. CipherGuard deliberately refrains from implementing live per-email or per-domain breach lookups, preserving the $0.00 zero-cost model and ensuring personal credentials are never transmitted over the network.
 - **Password Policy Compatibility Generator (v1.6)**: All constrained and pronounceable password generation relies exclusively on system CSPRNG (`crypto.getRandomValues`). Character positioning uses an $O(N)$ CSPRNG Fisher-Yates shuffle. User-provided disallowed character blocklists are evaluated purely as static string data without dynamic code execution (`eval()`). Real entropy is calculated against the actual constrained pool and displayed with an explicit warning when policy limits reduce entropy below ~40 bits.
 - **Visual Entropy Heatmap (v1.5)**: Color-codes character categories (symbols, letters, numbers, weak runs). To eliminate shoulder-surfing pattern leaks, while masked (`type="password"`), it renders **ONLY an aggregate, non-positional count summary** (`🟢×2 🔵×5 🟡×3 🔴×0`). Full per-character positional overlays are rendered exclusively in the unmasked state.
