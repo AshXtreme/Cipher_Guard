@@ -41,7 +41,7 @@ export default function TactileGenerator({ onGenerateToAnalyzer }) {
   // Auto-expiring copy buffer hook
   const { copied, timeLeft, copyToClipboard, cancelAutoClear } = useClipboardTimer();
 
-  const fetchGeneratedPassword = useCallback(async () => {
+  const fetchGeneratedPassword = useCallback(() => {
     setIsGenerating(true);
     setPolicyError(null);
     setIsLowEntropyWarning(false);
@@ -67,59 +67,19 @@ export default function TactileGenerator({ onGenerateToAnalyzer }) {
         setEntropyBits(pronRes.entropyBits);
         setIsLowEntropyWarning(pronRes.isLowEntropy);
       } else if (genMode === 'diceware' && isDicewareEnabled) {
-        let success = false;
-        try {
-          const query = new URLSearchParams({
-            mode: 'diceware',
-            word_count: wordCount.toString(),
-            separator: separator
-          });
-          const res = await fetch(`/api/generate?${query.toString()}`);
-          if (res.ok) {
-            const data = await res.json();
-            setGeneratedPassword(data.password);
-            setEntropyBits(data.entropy_bits);
-            success = true;
-          }
-        } catch {
-          // static build fallback
-        }
-        if (!success) {
-          const diceRes = generateDicewarePassword({ wordCount, separator });
-          setGeneratedPassword(diceRes.password);
-          setEntropyBits(diceRes.entropyBits);
-        }
+        const diceRes = generateDicewarePassword({ wordCount, separator });
+        setGeneratedPassword(diceRes.password);
+        setEntropyBits(diceRes.entropyBits);
       } else {
-        let success = false;
-        try {
-          const query = new URLSearchParams({
-            mode: 'random',
-            length: length.toString(),
-            symbols: includeSymbols.toString(),
-            numbers: includeNumbers.toString(),
-            exclude_ambiguous: excludeAmbiguous.toString()
-          });
-          const res = await fetch(`/api/generate?${query.toString()}`);
-          if (res.ok) {
-            const data = await res.json();
-            setGeneratedPassword(data.password);
-            setEntropyBits(data.entropy_bits);
-            success = true;
-          }
-        } catch {
-          // static build fallback
-        }
-        if (!success) {
-          const randRes = generateRandomPassword({
-            length,
-            includeSymbols,
-            includeNumbers,
-            excludeAmbiguous
-          });
-          setGeneratedPassword(randRes.password);
-          setEntropyBits(randRes.entropyBits);
-          setIsLowEntropyWarning(randRes.isLowEntropy);
-        }
+        const randRes = generateRandomPassword({
+          length,
+          includeSymbols,
+          includeNumbers,
+          excludeAmbiguous
+        });
+        setGeneratedPassword(randRes.password);
+        setEntropyBits(randRes.entropyBits);
+        setIsLowEntropyWarning(randRes.isLowEntropy);
       }
     } catch (err) {
       console.error("Generator error:", err);

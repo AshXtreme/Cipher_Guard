@@ -104,7 +104,8 @@ self.onmessage = async (e) => {
         mem: 16384,
         hashLen: 32,
         parallelism: 1,
-        type: 2 // Argon2id
+        type: 2, // Argon2id
+        locateFile: (name) => `/${name}`
       });
       results.argon2 = {
         hash: argonRes.encoded || argonRes.hashHex,
