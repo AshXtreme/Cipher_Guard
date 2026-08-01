@@ -149,8 +149,11 @@ export default function App() {
         {/* Pane 7: Client-Side Hashing & KDF Lab (MOD-07) */}
         <KdfLab />
 
-        {/* Pane 9: Encrypted Vault Export (MOD-09) */}
-        <VaultExportModal currentPassword={password} />
+        {/* Pane 9: Encrypted Vault Export & Import (MOD-09) */}
+        <VaultExportModal
+          currentPassword={password}
+          onRestorePassword={(restored) => setPassword(restored)}
+        />
 
         {/* Pane 10: Breach-Leak Exposure Timeline (MOD-10) */}
         <BreachTimeline />
