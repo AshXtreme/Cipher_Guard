@@ -13,6 +13,8 @@ import VaultExportModal from './components/VaultExportModal';
 import BreachTimeline from './components/BreachTimeline';
 import TotpGenerator from './components/TotpGenerator';
 import AuditDashboard from './components/AuditDashboard';
+import { analyzePasswordLocally } from './utils/analyzer';
+import { checkBloomFilter } from './utils/bloomFilter';
 
 // Helper function to compute SHA-1 hash prefix and suffix in browser
 async function computeSha1(text) {
@@ -60,45 +62,25 @@ export default function App() {
 
     setIsLoading(true);
     try {
-      // 1. Analyze Strength via backend POST /api/analyze
-      const analyzeRes = await fetch('/api/analyze', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password: candidate })
-      });
+      // 1. Analyze Strength 100% client-side in browser memory
+      const analyzeData = analyzePasswordLocally(candidate);
+      setAnalysis(analyzeData);
 
-      if (analyzeRes.ok) {
-        const analyzeData = await analyzeRes.json();
-        setAnalysis(analyzeData);
-      }
+      // 2. Compute local SHA-1 prefix & query client-side Bloom Filter dataset
+      const { prefix } = await computeSha1(candidate);
+      appendLog(`LOCAL HASH PREFIX [${prefix}] (0-network client memory)`);
 
-      // 2. Compute local SHA-1 prefix for k-anonymity breach check
-      const { prefix, suffix } = await computeSha1(candidate);
-      appendLog(`QUERY HASH PREFIX [${prefix}]... (Plaintext & full hash retained in browser only)`);
-
-      const breachRes = await fetch(`/api/breach-check?prefix=${prefix}`);
-      if (breachRes.ok) {
-        const breachData = await breachRes.json();
-        appendLog(`FORWARDED 5-HEX PREFIX TO HIBP PROXY WITH Add-Padding: true`);
-
-        const suffixes = breachData.suffixes || [];
-        const match = suffixes.find(s => s.suffix === suffix);
-
-        if (match) {
-          setBreachInfo({ count: match.count, isBreached: true });
-          appendLog(`⚠️ MATCH FOUND: Password appeared in ${match.count.toLocaleString()} known data breaches!`);
-        } else {
-          setBreachInfo({ count: 0, isBreached: false });
-          appendLog(`✅ STATUS: CLEAN — 0 breach occurrences found for suffix.`);
-        }
+      const isBreached = checkBloomFilter(candidate);
+      if (isBreached) {
+        setBreachInfo({ count: 1, isBreached: true });
+        appendLog(`⚠️ MATCH FOUND: Password matches a known breached pattern in local Bloom Filter.`);
       } else {
-        appendLog(`⚠️ Upstream breach check service unavailable.`);
-        setBreachInfo(null);
+        setBreachInfo({ count: 0, isBreached: false });
+        appendLog(`✅ STATUS: CLEAN — 0 breach occurrences in local Bloom Filter dataset.`);
       }
-
     } catch (err) {
       console.error("Evaluation error:", err);
-      appendLog(`❌ ERROR: Network error while reaching security proxy.`);
+      appendLog(`❌ ERROR: Evaluation failed in client memory.`);
     } finally {
       setIsLoading(false);
     }

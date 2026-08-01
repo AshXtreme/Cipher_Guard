@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { Columns3, Plus, Trash2, ShieldAlert, ShieldCheck, Eye, EyeOff, Lock, RefreshCw, AlertCircle } from 'lucide-react';
+import { analyzePasswordLocally } from '../utils/analyzer';
+import { checkBloomFilter } from '../utils/bloomFilter';
 
 const isComparisonEnabled = import.meta.env.VITE_FEATURE_COMPARISON === 'true';
 
@@ -11,18 +13,8 @@ export default function ComparisonTray({ currentAnalyzerPassword }) {
 
   if (!isComparisonEnabled) return null;
 
-  // Helper to hash password to SHA-1 prefix
-  const getSha1Prefix = async (text) => {
-    const encoder = new TextEncoder();
-    const data = encoder.encode(text);
-    const hashBuffer = await crypto.subtle.digest('SHA-1', data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const hex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
-    return { prefix: hex.substring(0, 5), fullHash: hex };
-  };
-
-  // Evaluate candidate via existing /api/analyze and /api/breach-check endpoints
-  const evaluateCandidate = async (passwordText) => {
+  // Evaluate candidate 100% client-side without network calls
+  const evaluateCandidate = (passwordText) => {
     if (!passwordText || candidates.length >= 3) return;
 
     // Check if already in list
@@ -30,25 +22,8 @@ export default function ComparisonTray({ currentAnalyzerPassword }) {
 
     setIsAnalyzing(true);
     try {
-      // 1. Analyze endpoint
-      const analyzeRes = await fetch('/api/analyze', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password: passwordText })
-      });
-      const analyzeData = await analyzeRes.json();
-
-      // 2. Client-side SHA-1 prefix for k-anonymity breach check
-      const { prefix, fullHash } = await getSha1Prefix(passwordText);
-      const breachRes = await fetch(`/api/breach-check?prefix=${prefix}`);
-      const breachData = await breachRes.json();
-
-      const suffix = fullHash.substring(5);
-      const match = (breachData.suffixes || []).find(s => s.suffix === suffix);
-      const breachCount = match ? match.count : 0;
-
-      // 3. Approximate bit entropy calculation: length * 6.55 or exact pool size
-      const entropyBits = Math.round(passwordText.length * 6.55 * 100) / 100;
+      const analyzeData = analyzePasswordLocally(passwordText);
+      const isBreached = checkBloomFilter(passwordText);
 
       const newCandidate = {
         id: Date.now() + Math.random().toString(36).substring(2, 7),
@@ -56,8 +31,8 @@ export default function ComparisonTray({ currentAnalyzerPassword }) {
         score: analyzeData.score,
         label: analyzeData.label,
         checks: analyzeData.checks,
-        entropyBits,
-        breachCount
+        entropyBits: analyzeData.entropyBits,
+        breachCount: isBreached ? 1 : 0
       };
 
       setCandidates(prev => [...prev.slice(0, 2), newCandidate]);
