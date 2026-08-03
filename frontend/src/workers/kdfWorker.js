@@ -1,5 +1,6 @@
 import md5 from 'js-md5';
 import bcrypt from 'bcryptjs';
+import argon2 from 'argon2-browser';
 
 // Web Worker message listener for off-main-thread KDF computation
 self.onmessage = async (e) => {
@@ -107,9 +108,22 @@ self.onmessage = async (e) => {
         };
       }
 
-      const argon2Module = await import('argon2-browser/dist/argon2.js');
-      const argon2 = argon2Module.default || argon2Module;
-      const argonRes = await argon2.hash({
+      // Safely resolve argon2 hash function for both ESM and CJS bundle targets inside Web Workers
+      let argon2Module = argon2;
+      if (!argon2Module || (!argon2Module.hash && !argon2Module.default)) {
+        try {
+          argon2Module = await import('argon2-browser');
+        } catch {
+          argon2Module = await import('argon2-browser/dist/argon2.js');
+        }
+      }
+      const argon2Hash = argon2Module?.hash || (argon2Module?.default && argon2Module.default.hash);
+
+      if (typeof argon2Hash !== 'function') {
+        throw new Error("Argon2 hash method not available on imported module.");
+      }
+
+      const argonRes = await argon2Hash({
         pass: text,
         salt: 'CipherGuardSalt32ByteLongString2026',
         time: 2,
