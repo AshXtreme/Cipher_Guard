@@ -96,12 +96,15 @@ self.onmessage = async (e) => {
     // 7. Argon2id (Memory-Hardened KDF)
     const t0_argon2 = performance.now();
     try {
+      const origin = (typeof self !== 'undefined' && self.location && self.location.origin) ? self.location.origin : '';
+      const wasmUrl = origin ? new URL('/argon2.wasm', origin).href : '/argon2.wasm';
+
       if (typeof self !== 'undefined') {
-        self.argon2WasmPath = '/argon2.wasm';
+        self.argon2WasmPath = wasmUrl;
         self.loadArgon2WasmBinary = async () => {
-          const res = await fetch('/argon2.wasm');
+          const res = await fetch(wasmUrl);
           if (!res.ok) {
-            throw new Error(`Failed to load WASM binary at /argon2.wasm: status ${res.status}`);
+            throw new Error(`Failed to load WASM binary at ${wasmUrl}: status ${res.status}`);
           }
           const buf = await res.arrayBuffer();
           return new Uint8Array(buf);
@@ -131,8 +134,8 @@ self.onmessage = async (e) => {
         hashLen: 32,
         parallelism: 1,
         type: 2, // Argon2id
-        wasmPath: '/argon2.wasm',
-        locateFile: (name) => `/${name}`
+        wasmPath: wasmUrl,
+        locateFile: (name) => (name.includes('argon2') ? wasmUrl : (origin ? `${origin}/${name}` : `/${name}`))
       });
       results.argon2 = {
         hash: argonRes.encoded || argonRes.hashHex,
