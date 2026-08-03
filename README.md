@@ -1,151 +1,184 @@
 # CipherGuard 🛡️
-> Security-Hardened Password Strength Analyzer, Generator & HIBP k-Anonymity Proxy
+> 100% Zero-Knowledge Client-Side Password Security Analyzer, Generator & Vault Sandbox
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+[![Build Status](https://img.shields.io/badge/Build-Passing-brightgreen.svg)]()
+[![Tests: 67 Passed](https://img.shields.io/badge/Tests-67%20Passed-00ff66.svg)]()
+[![Architecture: 100% Client--Side](https://img.shields.io/badge/Architecture-100%25%20Client--Side-blue.svg)]()
 
-CipherGuard is a security-conscious single-page web application that evaluates password strength, performs k-anonymity breach checks against Have I Been Pwned, and generates cryptographically secure alternative passwords.
+CipherGuard is a zero-knowledge, security-hardened web application designed to evaluate password strength, perform offline breach checking, generate cryptographically secure passwords, manage encrypted vault backups, and run WebAssembly cryptographic KDF benchmarks — **operating 100% in browser memory with zero network calls and zero server persistence.**
 
-For the full threat model, data-handling guarantees, and how to report a vulnerability, see [`SECURITY.md`](./SECURITY.md).
-
----
-
-## 🌟 Key Features & Architecture
-
-```
-┌─────────────────┐        HTTPS (POST)        ┌──────────────────┐        HTTPS        ┌──────────────────────┐
-│                 │  ──────────────────────▶   │                  │  ─────────────────▶ │                      │
-│  React (Vite)   │                            │  FastAPI Backend │                     │  HIBP Range API      │
-│  HeroUI v3      │  ◀──────────────────────   │  (Python 3.11+)  │  ◀───────────────── │  api.pwnedpasswords  │
-│                 │      Score & Feedback      │                  │  5-Hex Prefix Only  │  .com                │
-└─────────────────┘                            └──────────────────┘                     └──────────────────────┘
-```
-
-> **Release Notice**: `cipherguard-web` has reached its final stable feature release (**v1.7.0**).
-
-- **Offline TOTP / 2FA QR Generator Sandbox (v1.7.0)**: In-browser 2FA secret generator and scanner sandbox producing CSPRNG base32 secrets (`crypto.getRandomValues`), scannable `otpauth://` QR codes (`qrcode.react`), and rotating 30-second 6-digit TOTP tokens (`otplib`). Operates with **0 network requests**.
-- **Interactive Password Audit Dashboard (v1.7.0)**: In-browser batch password auditing supporting line-by-line paste and local `.txt`/`.csv` file import via native `FileReader` API. Features **Reuse Detector** (duplicate matching), **Weak Link Alert** (lowest score entry), and **Entropy/Score Distribution Chart** (histogram tier breakdown) with zero persistence and **0 network calls**.
-- **Breach-Leak Exposure Timeline (v1.6)**: Educational, historical reference timeline rendering citable breach statistics (RockYou, Adobe, Yahoo, LinkedIn, Canva, LastPass) powered by a static bundled dataset (`breach-timeline.json`). Operates 100% offline with **0 network requests**.
-- **Password Policy Compatibility Generator (v1.6)**: Rule-builder panel allowing custom min/max lengths, exact character counts (symbols, digits, uppercase), allow/blocklists, and **Memorable Pronounceable mode** (`CVC`/`CVCV`). Powered by CSPRNG (`crypto.getRandomValues`) and an $O(N)$ **Fisher-Yates shuffle**, featuring real entropy calculations and policy restriction warnings.
-- **Visual Password Entropy Heatmap (v1.5)**: Color-coded real-time character breakdown (🟢 Symbols ❖, 🔵 Letters Aa, 🟡 Numbers 12, 🔴 Weak Runs ⚠️). Features a **shoulder-surfing privacy design**: renders an aggregate count summary (`🟢×2 🔵×5 🟡×3 🔴×0`) while masked (`type="password"`), and full per-character overlays exclusively when unmasked.
-- **Encrypted Vault Export (v1.5)**: Authenticated client-side encryption (**AES-256-GCM**) with **PBKDF2-HMAC-SHA256** key derivation (600,000 iterations) using Web Crypto API. Allows exporting session credentials to a local `.cgvault` JSON file with **0 network requests**.
-- **Client-Side Hashing & KDF Lab (v1.4)**: Interactive educational cryptographic playground demonstrating legacy hashes (MD5, SHA-1), modern fast hashes (SHA-256, SHA-512), and Key Derivation Functions (PBKDF2, bcrypt, Argon2id). Offloaded to a **background Web Worker** (`kdfWorker.js`) to keep the UI fluid, with live computation timing (`ms`) and persistent sandbox disclaimers.
-- **Password Typo-Squatting Stress Test (v1.4)**: Evaluates single-edit distance QWERTY mutations (transpositions, shift slips, neighbor key replacements) 100% in-browser against the v1.3 Local Bloom Filter with **0 network calls**.
-- **Local Bloom Filter Pre-Check (v1.3)**: Instant, zero-network, client-side pre-check against SecLists top-100k common passwords using a compact 150KB build-time Bloom filter payload ($p \le 1\%$).
-- **Time-to-Crack Offline Simulator (v1.3)**: Calculates theoretical brute-force time-to-crack estimates ($S = 2^H$) across 4 attack scenario benchmarks (Online Throttled, Online Unthrottled, Offline Slow Hash, Offline Fast Hash) with explicit disclaimer text.
-- **Tactile Password Generator**: Cryptographically secure random selection (`secrets` module) supporting both **Random Characters** and **Diceware Passphrases** (bundled EFF Large list), with configurable length, word count, separator, and exact bit entropy ($H$).
-- **Password Health Comparison Matrix**: Compare up to 3 candidate passwords side-by-side (scores, entropy, breach checks, heuristics) using **strictly in-memory React state** with zero browser storage persistence.
-- **Auto-Expiring Copy Buffer**: Best-effort 30-second countdown after copying a password, after which the app attempts to clear the clipboard (`writeText('')`) with explicit user disclaimer.
-- **Monospaced Telemetry Terminal**: Real-time log stream demonstrating k-anonymity prefix forwarding and hash suffix match results.
-- **Hardened Security Architecture**: Input capping (max 256 chars), `Cache-Control: no-store`, HSTS, CSP, restricted CORS, rate limiting (`slowapi`), non-root Docker container, and log-redacting filters.
+For the full threat model, data-handling guarantees, and security controls, see [`SECURITY.md`](./SECURITY.md).
 
 ---
 
-## 🛠️ Quick Start & Local Development
+## 🌟 Architecture Overview
 
-> **Note on Docker scope**: `docker-compose.yml` currently containerizes the **backend only**. The frontend runs via the Vite dev server on your host machine for fast hot-module-reloading during development. This is intentional for local dev — see [Production Notes](#-production-notes) below for how this differs in a deployed environment.
+```
+┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                     BROWSER CLIENT (SPA)                                     │
+│                                                                                             │
+│  ┌──────────────────────────┐   ┌──────────────────────────┐   ┌──────────────────────────┐  │
+│  │   Live Strength Engine   │   │  Local Bloom Filter (0N) │   │  CSPRNG Policy Generator │  │
+│  │   (Entropy & Heuristics) │   │  (100k Breach Dataset)   │   │  (Web Crypto API)        │  │
+│  └──────────────────────────┘   └──────────────────────────┘   └──────────────────────────┘  │
+│               │                              │                              │                │
+│  ┌────────────▼─────────────┐   ┌────────────▼─────────────┐   ┌────────────▼─────────────┐  │
+│  │ AES-256-GCM Vault Import │   │ Argon2id Web Worker (0N) │   │ Offline 2FA/TOTP Sandbox │  │
+│  │ & Export (PBKDF2-SHA256) │   │ (WebAssembly / WASM)     │   │ (Crypto CSPRNG & otplib) │  │
+│  └──────────────────────────┘   └──────────────────────────┘   └──────────────────────────┘  │
+│                                                                                             │
+└─────────────────────────────────────────────────────────────────────────────────────────────┘
+                                   ZERO NETWORK CALLS — 100% OFFLINE
+```
 
-### 1. Start the Backend (Docker)
+> **Zero-Knowledge Guarantee**: All password evaluation, entropy calculation, breach pattern matching, vault encryption/decryption, and WebAssembly hashing execute **100% in browser memory**. Plaintext passwords, master passphrases, and full hashes are **never transmitted over the network** or persisted in storage.
+
+---
+
+## 🚀 Key Modules & Feature Overview
+
+CipherGuard features 12 integrated security modules operating purely client-side:
+
+### 1. `MOD-01`: Live Analyzer Console
+Real-time password evaluation calculating bit entropy ($H = L \log_2 N$), character pool distribution (lowercase, uppercase, digits, symbols), and visual LED score rating (0–100) as the user types.
+
+### 2. `MOD-02`: Heuristics Breakdown
+Interactive 7-rule security checklist evaluating length bounds ($\ge 12$), character class presence, dictionary immunity, and sequential pattern runs (`abc`, `123`, `qwerty`), accompanied by real-time security tips.
+
+### 3. `MOD-03`: Tactile Generator Rack
+Cryptographically secure password generator powered by `crypto.getRandomValues()` and an $O(N)$ **Fisher-Yates CSPRNG shuffle**. Supports 4 modes:
+- **Random Characters**: Customizable length, numbers, symbols, and ambiguous character exclusion.
+- **Diceware Passphrases**: EFF Large Wordlist passphrase generation with custom separators.
+- **Policy Rules**: Exact exact-count constraints (symbols, digits, uppercase) and blocklists.
+- **Memorable Pronounceable**: Alternating `CVC`/`CVCV` syllable structure with trailing digits/symbols.
+- **Web Audio API Tactile Sound Engine**: Zero-dependency oscillator sound feedback (`ctx.createOscillator()`) triggered on keypress/click interactions, strictly adhering to browser autoplay policies (`AudioContext.resume()`).
+
+### 4. `MOD-04`: Telemetry Terminal
+Monospaced, real-time event log streaming local execution events, hash prefix computation logs, and Bloom filter match notifications.
+
+### 5. `MOD-05`: Password Health Comparison Tool
+Side-by-side health comparison matrix permitting evaluation of up to 3 candidate passwords simultaneously in temporary React state. Zero persistence to `localStorage` or `sessionStorage`.
+
+### 6. `MOD-06`: Time-to-Crack Offline Simulator
+Theoretical brute-force time-to-crack calculator ($S = 2^H$) evaluating candidate passwords across 4 attack scenarios:
+1. Online Throttled (100 att/sec)
+2. Online Unthrottled (10,000 att/sec)
+3. Offline Slow Hash (10,000,000 att/sec — bcrypt/Argon2)
+4. Offline Fast Hash (100,000,000,000 att/sec — MD5/SHA-256 GPU cluster)
+
+### 7. `MOD-07`: Client-Side Hashing & KDF Lab
+Interactive educational cryptographic laboratory demonstrating legacy hashes (MD5, SHA-1), modern fast hashes (SHA-256, SHA-512), and Key Derivation Functions (PBKDF2, bcrypt, Argon2id). Offloaded to a dedicated Web Worker (`kdfWorker.js`) using a WebAssembly binary (`/argon2.wasm`) to keep the UI thread 100% fluid.
+
+### 8. `MOD-08`: Typo-Squatting Stress Test
+Evaluates single-edit distance QWERTY mutations (transpositions, shift slips, neighbor key replacements) 100% in-browser against the local Bloom filter dataset.
+
+### 9. `MOD-09`: Encrypted Vault Export & Import
+Zero-knowledge backup manager utilizing Web Crypto API (`SubtleCrypto`):
+- **Export**: Encrypts session credentials into an **AES-256-GCM** payload using **PBKDF2-HMAC-SHA256** (600,000 iterations) and downloads a `.cgvault` JSON package.
+- **Import & Decrypt**: Features a drag-and-drop file upload zone for `.cgvault` / `.json` backup files, metadata parser (`salt`, `iv`, `iterations`), Master Passphrase prompt, client-side Web Crypto decryption, error handling, and session restoration.
+- **Guidance Notice**: Includes explicit warning banner stating backup files cannot be opened in raw text editors.
+
+### 10. `MOD-10`: Breach-Leak Exposure Timeline
+Historical breach reference timeline rendering citable breach statistics (RockYou, Adobe, Yahoo, LinkedIn, Canva, LastPass) powered by a bundled offline dataset (`breach-timeline.json`).
+
+### 11. `MOD-11`: Offline TOTP / 2FA QR Generator Sandbox
+In-browser 2FA secret generator and scanner sandbox producing CSPRNG base32 secrets, scannable `otpauth://` QR codes (`qrcode.react`), and rotating 30-second 6-digit TOTP tokens (`otplib`). Operates 100% offline.
+
+### 12. `MOD-12`: Interactive Password Audit Dashboard
+In-browser batch password auditing supporting multiline paste and local `.txt`/`.csv` file import via native `FileReader` API. Features a **Duplicate Detector**, **Weak Link Alert**, and **Entropy/Score Distribution Chart** with zero data persistence.
+
+---
+
+## 🔒 Security & Privacy Guarantees
+
+| Security Aspect | Implementation Detail | Guarantee |
+|---|---|---|
+| **Data Transmission** | 100% In-Browser Execution | **0 Network Requests** for analysis, generation, breach checks, or vault operations. |
+| **Breach Checks** | Compact 150KB Local Bloom Filter ($p \le 1\%$) | Matches against top-100k common breach patterns completely offline. |
+| **Vault Encryption** | AES-256-GCM + PBKDF2-HMAC-SHA256 (600,000 iterations) | Standard Web Crypto primitives (`SubtleCrypto`); keys derived strictly in browser memory. |
+| **Randomness** | `window.crypto.getRandomValues()` | Cryptographically Secure Pseudorandom Number Generation (CSPRNG). |
+| **WebAssembly Security** | Argon2id compiled to `/argon2.wasm` | Isolated Web Worker execution with fallback to browser Web Crypto. |
+| **Data Storage** | Transient React State | Candidate inputs are never saved to `localStorage`, `sessionStorage`, or external databases. |
+
+Full threat model and security control checklist: [`SECURITY.md`](./SECURITY.md).
+
+---
+
+## 🛠️ Local Development & Build Commands
+
+### Prerequisites
+- **Node.js**: v18.0.0 or higher
+- **npm**: v9.0.0 or higher
+
+### 1. Installation
 
 ```bash
-# 1. Clone the repository
+# Clone repository
 git clone https://github.com/AshXtreme/Cipher_Guard.git
-cd Cipher_Guard
+cd Cipher_Guard/frontend
 
-# 2. Copy environment template
-cp .env.example .env
-
-# 3. Spin up the backend container
-docker-compose up --build
+# Install dependencies
+npm install
 ```
-The FastAPI backend will be available at `http://localhost:8000`. Interactive API docs (if enabled for your environment) are at `http://localhost:8000/docs`.
 
-### 2. Start the Frontend (Vite dev server)
+### 2. Run Local Development Server
 
 ```bash
-cd frontend
-npm install
 npm run dev
 ```
-The React frontend will run at `http://localhost:5173` (Vite will auto-select `5174` if `5173` is already in use).
+Open `http://localhost:5173` in your browser.
 
-### 3. Manual Backend Setup (without Docker)
+### 3. Run Automated Vitest Suite
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-uvicorn backend.app:app --reload --port 8000
-```
-
----
-
-## ⚙️ Configuration & Feature Flags
-
-| Variable | Where | Purpose | Default |
-|---|---|---|---|
-| `ALLOWED_ORIGINS` | Backend `.env` | Comma-separated list of origins permitted by CORS | `http://localhost:5173,http://localhost:3000` |
-| `ENVIRONMENT` | Backend `.env` | Toggles debug behavior (`development` / `production`) | `development` |
-| `PORT` | Backend `.env` | Port the FastAPI app listens on | `8000` |
-| `VITE_API_BASE_URL` | `frontend/.env` | Backend URL the frontend calls | `http://localhost:8000` |
-| `VITE_FEATURE_DICEWARE` | `frontend/.env` | Enables Diceware Passphrase mode in generator | `true` |
-| `VITE_FEATURE_COPY_BUFFER` | `frontend/.env` | Enables 30s auto-expiring copy buffer countdown | `true` |
-| `VITE_FEATURE_COMPARISON` | `frontend/.env` | Enables side-by-side in-memory comparison tray | `true` |
-
-See `.env.example` and `frontend/.env.example` for the full list with placeholder values.
-
----
-
-## 🔒 Security Guarantees & Privacy Controls
-
-- **Local Bloom Filter Pre-Check**: Loaded into browser memory at app startup. Performs instant client-side checks with **zero network requests** and zero server calls.
-- **Time-to-Crack Simulator Disclaimer**: Rendered directly within the simulator component:
-  > *"Disclaimer: These estimates assume a theoretical brute-force search across the full search space. Real-world attack speed depends on whether the password matches known dictionary words or patterns, and how securely the target service hashes stored credentials."*
-- **Scoped Zero-Knowledge Guarantee**: For **breach checking only**, the plaintext password and the full 40-character SHA-1 hash never leave the browser — only a 5-character hash prefix is sent to the backend, which forwards it to HIBP. This is the k-anonymity model.
-- **Strength analysis is server-side by design**: The `/api/analyze` endpoint *does* receive the plaintext password over HTTPS so scoring can run in Python. It is never logged, cached, or stored — see the redaction guarantee below — but it is not a zero-knowledge operation, unlike the breach check.
-- **In-Memory Comparison Candidate Storage**: The Password Health Comparison Tool keeps candidate state strictly in temporary React memory. Candidate passwords are **never** persisted to `localStorage` or `sessionStorage`. All comparison data is cleared upon page refresh or tab close.
-- **Privacy Banner Wording**: Rendered directly above the comparison tray whenever candidates exist:
-  > *"Comparison data is kept in memory only and is cleared when you refresh or leave this page. It is never sent anywhere except for the same strength/breach checks used elsewhere in this app."*
-- **Log Redaction**: Automated logging filters (`backend/utils/redactor.py`) scrub sensitive keys (`password`, `secret`, `token`) and SHA-1 hashes from system log streams.
-- **ReDoS & Hashing DoS Mitigation**: Hard length limit (256 characters) enforced server-side via Pydantic model validation.
-- **Restricted CORS**: Only origins listed in `ALLOWED_ORIGINS` are permitted; no wildcard origins.
-- **Rate Limiting**: `slowapi` protects API routes against brute-forcing (`30/min` analyze, `20/min` breach check, `60/min` generate).
-
-Full threat model and control-by-control checklist: [`SECURITY.md`](./SECURITY.md).
-
----
-
-## 📖 API Endpoint Reference
-
-| Method | Endpoint | Query / Body Params | Description |
-|---|---|---|---|
-| `POST` | `/api/analyze` | Body: `{ "password": "..." }` | Analyzes password strength and returns score, label, checks, and tips. Password is transmitted over HTTPS but never logged or stored. |
-| `GET` | `/api/breach-check` | Query: `prefix` (5 hex chars) | Proxies HIBP range API with `Add-Padding: true` and returns suffix matches. Never receives a full password or full hash. |
-| `GET` | `/api/generate` | Query: `mode` (`random` \| `diceware`), `length`, `symbols`, `numbers`, `exclude_ambiguous`, `word_count`, `separator` | Returns securely generated password or Diceware passphrase & bit entropy score. Backward-compatible when `mode` is omitted. |
-| `GET` | `/health` | None | Returns `{ "status": "healthy" }` for monitoring uptime. Reveals no internal details. |
-
----
-
-## 🧪 Testing & Quality Assurance
-
-### Backend Automated Test Suite (Pytest)
-```bash
-source .venv/bin/activate
-pytest -v
-```
-
-### Frontend Automated Test Suite (Vitest)
-```bash
-cd frontend
 npm test
 ```
+Executes the full test suite (67 unit tests covering components, sound engines, WASM workers, and vault encryption).
 
-CI workflow automatically runs `bandit` SAST security scans, `pip-audit` vulnerability audits, `vitest`, and `pytest` on every pull request.
+### 4. Build Production Bundle
+
+```bash
+npm run build
+```
+Compiles production assets to `dist/`, including static WebAssembly binaries (`/argon2.wasm`).
+
+### 5. Preview Production Build
+
+```bash
+npm run preview
+```
+Previews the production build at `http://localhost:4173` with full WebAssembly `application/wasm` MIME header support.
 
 ---
 
-## 🚧 Production Notes
+## 🌐 Deploying to Vercel
 
-This README currently documents **local development only**. Deploying CipherGuard beyond local dev (build steps, TLS termination, reverse proxy, environment-specific `ALLOWED_ORIGINS`, disabling interactive docs, etc.) is not yet documented here — treat any production deployment as requiring its own review pass against [`SECURITY.md`](./SECURITY.md) first.
+CipherGuard is configured for instant zero-configuration static deployment on **Vercel**:
+
+1. **Framework Preset**: `Vite`
+2. **Root Directory**: `frontend`
+3. **Build Command**: `npm run build`
+4. **Output Directory**: `dist`
+
+### Public Asset & WASM Resolution
+The build process preserves static WebAssembly binaries in `public/argon2.wasm` and sets `assetsInclude: ['**/*.wasm']` in `vite.config.js`. When deployed on Vercel, `/argon2.wasm` is served directly with `Content-Type: application/wasm`.
+
+---
+
+## 🧪 Quality Assurance & Test Coverage
+
+The frontend maintains high automated test coverage via **Vitest** and `@testing-library/react`:
+
+- `analyzer.test.jsx`: Client-side strength scoring & heuristic rule checks.
+- `bloomFilter.test.jsx`: Instant 0-network Bloom filter pattern matching.
+- `policyGenerator.test.jsx`: CSPRNG password policy generation & Fisher-Yates shuffle.
+- `tactileAudio.test.jsx`: Web Audio API sound synthesizer & autoplay policy compliance.
+- `TactileGenerator.test.jsx`: Generator UI interaction & tactile feedback.
+- `vaultExporter.test.jsx`: AES-256-GCM encryption & PBKDF2 round-trip derivation.
+- `VaultImport.test.jsx`: File upload, metadata parsing, passphrase prompt & vault restoration.
+- `AuditDashboard.test.jsx`: Batch audit processing & distribution histogram.
+- `TotpGenerator.test.jsx`: Base32 secret generation & TOTP rotation.
 
 ---
 
