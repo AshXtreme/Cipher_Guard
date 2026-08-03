@@ -10,8 +10,13 @@ export default function AuditDashboard() {
 
   const handleRunAudit = () => {
     if (!inputText.trim()) return;
-    const result = auditPasswordBatch(inputText);
-    setAuditResult(result);
+    setIsAuditing(true);
+    try {
+      const result = auditPasswordBatch(inputText);
+      setAuditResult(result);
+    } finally {
+      setIsAuditing(false);
+    }
   };
 
   const handleClearAudit = () => {
@@ -26,13 +31,22 @@ export default function AuditDashboard() {
     const file = e.target.files[0];
     if (!file) return;
 
+    setIsAuditing(true);
     const reader = new FileReader();
     reader.onload = (event) => {
       const text = event.target.result;
       setInputText(text);
-      // Auto run audit on file import
-      const result = auditPasswordBatch(text);
-      setAuditResult(result);
+      setTimeout(() => {
+        try {
+          const result = auditPasswordBatch(text);
+          setAuditResult(result);
+        } finally {
+          setIsAuditing(false);
+        }
+      }, 10);
+    };
+    reader.onerror = () => {
+      setIsAuditing(false);
     };
     reader.readAsText(file);
   };
