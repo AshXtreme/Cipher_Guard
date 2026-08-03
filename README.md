@@ -1,6 +1,9 @@
 # CipherGuard 🛡️
 > 100% Zero-Knowledge Client-Side Password Security Analyzer, Generator & Vault Sandbox
 
+🌐 **Live Production App**: [https://cipher-guard-ash-xtreme.vercel.app/](https://cipher-guard-ash-xtreme.vercel.app/)
+
+[![Live Deployment](https://img.shields.io/badge/Vercel-Live%20Demo-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://cipher-guard-ash-xtreme.vercel.app/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![Build Status](https://img.shields.io/badge/Build-Passing-brightgreen.svg)]()
 [![Tests: 67 Passed](https://img.shields.io/badge/Tests-67%20Passed-00ff66.svg)]()
@@ -153,6 +156,8 @@ Previews the production build at `http://localhost:4173` with full WebAssembly `
 ---
 
 ## 🌐 Deploying to Vercel
+
+🚀 **Live Deployment**: [https://cipher-guard-ash-xtreme.vercel.app/](https://cipher-guard-ash-xtreme.vercel.app/)
 
 CipherGuard is configured for instant zero-configuration static deployment on **Vercel**:
 
