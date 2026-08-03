@@ -42,8 +42,8 @@ function checkSequential(str) {
 /**
  * Evaluates password strength 100% in browser memory with zero network calls.
  */
-export function analyzePasswordLocally(password) {
-  if (!password) {
+export function analyzePasswordLocally(passwordInput) {
+  if (!passwordInput) {
     return {
       score: 0,
       label: 'Awaiting Input',
@@ -60,6 +60,8 @@ export function analyzePasswordLocally(password) {
       suggestions: ['Type a password to analyze strength in real-time.']
     };
   }
+
+  const password = passwordInput.slice(0, 256);
 
   const has_lower = /[a-z]/.test(password);
   const has_upper = /[A-Z]/.test(password);

@@ -48,8 +48,9 @@ const SHIFT_MAP = {
  * Generates single-edit distance QWERTY mutations for a password candidate.
  * Returns array of objects: [{ type: string, variant: string }]
  */
-export function generateTypoMutations(password) {
-  if (!password || typeof password !== 'string') return [];
+export function generateTypoMutations(passwordInput) {
+  if (!passwordInput || typeof passwordInput !== 'string') return [];
+  const password = passwordInput.slice(0, 256);
 
   const mutations = [];
   const seen = new Set([password]);

@@ -39,12 +39,18 @@ describe('ComparisonTray Component', () => {
       return Promise.reject(new Error('Unknown API route'));
     });
 
-    // Mock crypto.subtle.digest
+    // Mock crypto.subtle.digest and getRandomValues
     Object.defineProperty(global, 'crypto', {
       value: {
         subtle: {
           digest: vi.fn().mockResolvedValue(new Uint8Array(20).buffer)
-        }
+        },
+        getRandomValues: vi.fn((arr) => {
+          for (let i = 0; i < arr.length; i++) {
+            arr[i] = Math.floor(Math.random() * 256);
+          }
+          return arr;
+        })
       },
       writable: true,
       configurable: true

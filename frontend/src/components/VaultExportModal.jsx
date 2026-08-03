@@ -151,12 +151,6 @@ export default function VaultExportModal({ currentPassword = '', currentAnalyzer
       setRestoredData(decrypted);
       setSuccessToast("Vault Restored Successfully!");
 
-      try {
-        localStorage.setItem('cipherguard_restored_vault', JSON.stringify(decrypted));
-      } catch {
-        // quota / restricted storage fallback
-      }
-
       if (decrypted.credentials && decrypted.credentials.length > 0 && onRestorePassword) {
         onRestorePassword(decrypted.credentials[0].value);
       }

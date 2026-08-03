@@ -25,8 +25,12 @@ export default function ComparisonTray({ currentAnalyzerPassword }) {
       const analyzeData = analyzePasswordLocally(passwordText);
       const isBreached = checkBloomFilter(passwordText);
 
+      const randomBuffer = new Uint8Array(4);
+      crypto.getRandomValues(randomBuffer);
+      const randomHex = Array.from(randomBuffer).map(b => b.toString(16).padStart(2, '0')).join('');
+
       const newCandidate = {
-        id: Date.now() + Math.random().toString(36).substring(2, 7),
+        id: `${Date.now()}_${randomHex}`,
         password: passwordText,
         score: analyzeData.score,
         label: analyzeData.label,
